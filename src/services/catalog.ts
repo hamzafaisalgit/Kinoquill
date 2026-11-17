@@ -20,4 +20,5 @@ export function createCatalog(db: KinoquillDatabase) {
     tv: new TvProgressService(db),
   };
 }
+
 export const catalog = createCatalog(localDatabase.database);
