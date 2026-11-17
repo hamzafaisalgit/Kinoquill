@@ -6,6 +6,7 @@ import { CategoryService } from "./categoryService";
 import { LibraryService } from "./libraryService";
 import { ViewingService } from "./viewingService";
 import { TvProgressService } from "./tvProgressService";
+import { MovieService } from "./movieService";
 import type { KinoquillDatabase } from "../db/database";
 
 /** Inject an isolated database for tests; production uses the Phase 1 singleton. */
@@ -18,6 +19,7 @@ export function createCatalog(db: KinoquillDatabase) {
     library: new LibraryService(db),
     viewing: new ViewingService(db),
     tv: new TvProgressService(db),
+    movies: new MovieService(db),
   };
 }
 

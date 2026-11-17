@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Clapperboard } from "lucide-react";
 import { tmdbImage } from "../../services/tmdb/images";
 import type { ImageSize } from "../../services/tmdb/images";
+import { movieImage } from "../../utils/movieImages";
 
 function Artwork({
   src,
@@ -48,12 +49,14 @@ export function PosterArtwork({
   title,
   size = "w342",
   backdrop = false,
+  allowExternal = false,
 }: {
   path?: string | null;
   title: string;
   size?: ImageSize;
   backdrop?: boolean;
+  allowExternal?: boolean;
 }) {
-  const src = tmdbImage(path, size);
+  const src = allowExternal ? movieImage(path, size) : tmdbImage(path, size);
   return <Artwork key={src} src={src} title={title} backdrop={backdrop} />;
 }

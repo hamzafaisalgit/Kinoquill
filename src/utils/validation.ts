@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { dateBounds, isCalendarDate } from "./dates";
 import { ValidationError } from "./errors";
+import type { LibraryEntry } from "../types/domain";
 
 const name = z.string().trim().min(1, "Please enter a name.");
 const nullableText = z.string().trim().nullable().default(null);
@@ -214,6 +215,46 @@ export const libraryUpdateSchema = z
   .strict();
 export type LibraryInput = z.input<typeof libraryCreateSchema>;
 export type LibraryUpdate = z.input<typeof libraryUpdateSchema>;
+/** Shared editing policy: retain historical precision and incompleteness unchanged. */
+export function validateLibraryEdit(
+  current: LibraryEntry,
+  input: LibraryUpdate,
+) {
+  const patch = validate(libraryUpdateSchema, input);
+  const fields = {
+    status: current.status,
+    personalRating: current.personalRating,
+    personalReview: current.personalReview,
+    isFavorite: current.isFavorite,
+    startedAt: current.startedAt,
+    completedAt: current.completedAt,
+  };
+  const values = validate(libraryBaseSchema, { ...fields, ...patch });
+  if (
+    values.personalRating !== null &&
+    (current.ratingPolicy === "manual" ||
+      values.personalRating !== current.personalRating) &&
+    !Number.isInteger(values.personalRating * 2)
+  )
+    throw new ValidationError(
+      "Please use half-point rating increments for new ratings. Historical ratings are preserved when unchanged.",
+    );
+  if (values.status === "unknown" && current.status !== "unknown")
+    throw new ValidationError(
+      "Unknown status is reserved for historical records.",
+    );
+  if (
+    values.status === "completed" &&
+    values.personalRating === null &&
+    !(
+      current.ratingPolicy === "historical" &&
+      current.status === "completed" &&
+      current.personalRating === null
+    )
+  )
+    throw new ValidationError("Completed titles require a personal rating.");
+  return values;
+}
 export const viewingCreateSchema = z
   .object({
     libraryEntryId: z.string().min(1),

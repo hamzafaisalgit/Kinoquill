@@ -25,6 +25,29 @@ npm.cmd run preview
 
 `test` runs Vitest once. `build` runs TypeScript before creating `dist/`. `preview` serves the production build locally. A production static host must route unknown application paths to `index.html` for React Router.
 
+## Phase 4 — movie management
+
+**Movies → Add movie** offers TMDB search or manual entry. Dashboard and topbar actions open the same workflow. A prepared movie draft from Discover continues into the shared add/edit form with its artwork, external IDs, genres, and runtime intact. Nothing enters the library until **Save movie** commits successfully.
+
+- Required: title, at least one genre, and watch status. **Watched** also requires a personal rating. Statuses are Watchlist, Watching, Watched, On Hold, and Dropped.
+- Ratings use **0–10 in half points**; zero is a real rating, while blank means unrated. Existing historical precision such as 8.7 survives unrelated edits.
+- Optional: release year/date, original title, runtime, language/countries, overview, poster/backdrop, external IDs, directors, viewing date, favorite, categories, and multiline personal review. Overview and review remain separate. Artwork accepts TMDB paths or HTTPS image URLs; image files are not stored.
+- Genres and categories support searchable selection, removal, and new names. Directors support explicit existing-person selection or creation; matching names are never silently merged. Removing a director only unlinks that movie.
+- Movie cards, details, Favorites, Watchlist, recently added movies, and watched counts react to IndexedDB changes. Collection pages show 24 movies per page. Details use stable local title IDs.
+- **Edit movie → Save changes** updates the same record and preserves its original date added. Stale edits are rejected, failed saves retain form values, and unsaved navigation asks whether to stay or discard.
+- An explicitly entered viewing date creates or updates the first-watch session atomically. Dates retain day/month/year precision; no date is invented. Clearing a date preserves unrelated rewatches.
+- **Delete movie** asks for confirmation and moves the record to **Movies → Recently Deleted**. **Restore** brings it back with its rating, review, associations, and viewing history. There is no permanent-delete action.
+
+All personal writes use the existing Phase 2 services in one transaction. Database **`kinoquill_local` remains schema v2**, with no reset or migration. New dependencies are `react-hook-form` and `sonner`. Main implementation: `src/components/movies/`, `src/pages/Movie*`, `src/services/movieService.ts`, and `src/styles/movies.css`.
+
+Verification uses TypeScript, ESLint, the production build, and this focused regression selection (six new movie-service checks alongside existing regressions):
+
+```powershell
+npm.cmd test -- src/services/movieService.test.ts src/services/tmdb/tmdb.test.ts src/pages/navigation.test.tsx src/services/localDatabase.test.ts
+```
+
+All **33 selected tests** passed, along with TypeScript, ESLint, and the production build. A separate browser profile exercised manual add, conditional rating validation, optional directors/categories/date/review, unsaved navigation, same-ID editing, refresh persistence, Favorites, confirmed deletion/restoration, and desktop/mobile layouts. A TMDB-shaped draft fixture verified metadata handoff and refresh recovery; live authenticated TMDB access remains unverified without a valid token. TV management, advanced library filtering, spreadsheet import, rewatches UI, and charts remain for later phases.
+
 ## Phase 3 — discovery and metadata
 
 Open **Discover** in the topbar, or **Discover movies/shows** from the collection pages. `/discover` provides debounced live search with All titles, Movies, and TV shows filters, keyboard result navigation, validated poster URLs with local fallbacks, loading/error states, selected-title details, editable director/creator suggestions, and a manual metadata alternative. `/draft` shows the prepared metadata and allows editing or discarding it. Discovery does not create title or library records, and it never changes existing personal ratings or reviews.
@@ -42,7 +65,7 @@ The credential is held only in this tab's memory. Reloading the page removes it.
 
 Selecting a result opens a metadata preview. Director/creator suggestions are not selected automatically: add the names you want, edit them, or leave them blank. **Use this title** checks the existing Phase 2 duplicate service before preparing a typed draft. Strong external-ID matches show the existing local information and block a separate draft. Possible name/year matches require an explicit confirmation. No existing record is merged or overwritten.
 
-**Enter manually** prepares the same draft contract from a title, media type, optional year/runtime/overview, local genre selections, and optional directors/creators. A draft may be incomplete; final library validation belongs to the later save workflow. The prepared screen allows metadata editing and clearly states that nothing has been saved. Drafts are session-only and disappear on reload; revisiting `/draft` after reload shows a recovery screen rather than claiming persistence. The full movie form and actual personal-library save remain Phase 4; TV management remains Phase 5.
+**Enter manually** prepares the same draft contract from a title, media type, optional year/runtime/overview, local genre selections, and optional directors/creators. A draft may be incomplete; the movie form applies final library validation. The prepared screen allows metadata editing and clearly states that nothing has been saved. Drafts are session-only and disappear on reload; revisiting `/draft` or the draft movie form after reload shows a recovery screen. Movie drafts now continue to the Phase 4 form; TV management remains Phase 5.
 
 Selected metadata is cached only in memory for five minutes, with a maximum of 24 details records. Search responses are not kept indefinitely, and no image blobs or credentials enter the cache. Changing/removing the token clears the cache; Settings also provides **Clear metadata cache**. Artwork uses validated TMDB image paths and may require internet access even when the personal library is available offline. Network/CORS restrictions, rate limiting, invalid credentials, timeouts, and service errors have explicit messages and manual alternatives. No unauthorized proxy fallback is used.
 

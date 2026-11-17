@@ -200,7 +200,7 @@ function PreparedSummary({
             <p>
               The full{" "}
               {draft.metadata.mediaType === "movie"
-                ? "movie form arrives in Phase 4"
+                ? "movie form is ready for your personal record"
                 : "TV form arrives in Phase 5"}
               . Ratings, reviews, viewing dates, and a real library save happen
               there. This draft has not created a title or personal entry.
@@ -212,7 +212,13 @@ function PreparedSummary({
             <Pencil size={14} />
             Edit metadata
           </button>
-          <UpcomingButton>Save to library</UpcomingButton>
+          {draft.metadata.mediaType === "movie" ? (
+            <Link className="button" to="/movies/new?draft=1">
+              Continue to movie form <ArrowUpRight size={14} />
+            </Link>
+          ) : (
+            <UpcomingButton>Save to library · Phase 5</UpcomingButton>
+          )}
           <button className="text-button" onClick={onDiscard}>
             <Trash2 size={14} />
             Discard draft

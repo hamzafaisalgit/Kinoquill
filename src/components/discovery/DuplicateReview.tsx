@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { AlertTriangle, ArrowRight, X } from "lucide-react";
 import type { DuplicateMatch } from "../../types/domain";
 import { useLibrary } from "../../hooks/useCatalog";
+import { Link } from "react-router-dom";
 
 function ExistingRecord({ match }: { match: DuplicateMatch }) {
   const library = useLibrary({ search: match.title.title, pageSize: 200 });
@@ -45,6 +46,11 @@ function ExistingRecord({ match }: { match: DuplicateMatch }) {
           </div>
         )}
       </dl>
+      {match.title.mediaType === "movie" && (
+        <Link className="text-link" to={`/movies/${match.title.id}`}>
+          Open existing movie ↗
+        </Link>
+      )}
     </details>
   );
 }

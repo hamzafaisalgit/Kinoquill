@@ -19,6 +19,7 @@ import {
   libraryCreateSchema,
   libraryUpdateSchema,
   validate,
+  validateLibraryEdit,
 } from "../utils/validation";
 import { newId, now, normalizeName } from "../utils/normalization";
 import { ConflictError, ValidationError } from "../utils/errors";
@@ -167,40 +168,7 @@ export class LibraryService {
         throw new ConflictError(
           "This library entry changed in another view. Reload it before saving.",
         );
-      const fields = {
-        status: current.status,
-        personalRating: current.personalRating,
-        personalReview: current.personalReview,
-        isFavorite: current.isFavorite,
-        startedAt: current.startedAt,
-        completedAt: current.completedAt,
-      };
-      const values = validate(libraryBaseSchema, { ...fields, ...patch });
-      const newRating = values.personalRating !== current.personalRating;
-      if (
-        values.personalRating !== null &&
-        (current.ratingPolicy === "manual" || newRating) &&
-        !Number.isInteger(values.personalRating * 2)
-      )
-        throw new ValidationError(
-          "Please use half-point rating increments for new ratings. Historical ratings are preserved when unchanged.",
-        );
-      if (values.status === "unknown" && current.status !== "unknown")
-        throw new ValidationError(
-          "Unknown status is reserved for historical records.",
-        );
-      if (
-        values.status === "completed" &&
-        values.personalRating === null &&
-        !(
-          current.ratingPolicy === "historical" &&
-          current.status === "completed" &&
-          current.personalRating === null
-        )
-      )
-        throw new ValidationError(
-          "Completed titles require a personal rating.",
-        );
+      const values = validateLibraryEdit(current, patch);
       const entry = {
         ...current,
         ...values,

@@ -75,3 +75,19 @@ export const navigation = [
   { path: "/import-export", label: "Import & Export", icon: ArrowLeftRight },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
+export function pageLabel(path: string) {
+  return (
+    navigation.find((route) => route.path === path)?.label ??
+    (path === "/discover"
+      ? "Discover"
+      : path === "/draft"
+        ? "Prepared draft"
+        : path === "/movies/new"
+          ? "Add movie"
+          : path.startsWith("/movies/")
+            ? path.endsWith("/edit")
+              ? "Edit movie"
+              : "Movie details"
+            : "Page not found")
+  );
+}

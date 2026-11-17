@@ -3,6 +3,7 @@ import { renderToString } from "react-dom/server";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { navigation, collectionRoutes } from "../lib/routes";
 import { Dashboard } from "./Dashboard";
+import MoviesPage, { MovieCollection } from "./MoviesPage";
 import {
   AnalyticsPage,
   CollectionPage,
@@ -14,7 +15,17 @@ import {
 describe("frontend-only navigation", () => {
   const pages = [
     <Dashboard />,
-    ...collectionRoutes.map((route) => <CollectionPage route={route} />),
+    ...collectionRoutes.map((route) =>
+      route.path === "/movies" ? (
+        <MoviesPage />
+      ) : route.path === "/favorites" ? (
+        <MovieCollection kind="favorites" />
+      ) : route.path === "/watchlist" ? (
+        <MovieCollection kind="watchlist" />
+      ) : (
+        <CollectionPage route={route} />
+      ),
+    ),
     <AnalyticsPage />,
     <ImportExportPage />,
     <SettingsPage />,

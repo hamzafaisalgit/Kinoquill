@@ -10,7 +10,7 @@ export interface LocalQueryResult<T> {
   error: Error | null;
 }
 
-function useCatalogQuery<T>(
+export function useCatalogQuery<T>(
   query: () => Promise<T>,
   dependencies: DependencyList,
 ): LocalQueryResult<T> {
@@ -86,4 +86,16 @@ export function useWatchlist(query: LibraryQuery = {}) {
 }
 export function useLibrarySummary() {
   return useCatalogQuery(() => catalog.library.getSummary(), []);
+}
+export function useMovie(id: string) {
+  return useCatalogQuery(() => catalog.movies.getMovie(id), [id]);
+}
+export function useDeletedMovies() {
+  return useCatalogQuery(() => catalog.movies.listDeletedMovies(), []);
+}
+export function usePeople() {
+  return useCatalogQuery(() => catalog.people.listPeople(), []);
+}
+export function useMovieSummary() {
+  return useCatalogQuery(() => catalog.movies.getSummary(), []);
 }

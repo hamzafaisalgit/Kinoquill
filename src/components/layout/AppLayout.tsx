@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   ArrowLeftToLine,
   ArrowRightFromLine,
   Menu,
+  Plus,
   Search,
   X,
 } from "lucide-react";
-import { navigation } from "../../lib/routes";
+import { navigation, pageLabel } from "../../lib/routes";
 import { LocalStorageStatus } from "../common/LocalStorageStatus";
-import { ErrorState } from "../common/States";
+import { ErrorState, LoadingState } from "../common/States";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 
 function Brand({ compact = false }: { compact?: boolean }) {
@@ -137,13 +138,7 @@ export function MobileNavigation({ onClose }: { onClose: () => void }) {
 
 export function Topbar({ onMenu }: { onMenu: () => void }) {
   const location = useLocation();
-  const page =
-    navigation.find((route) => route.path === location.pathname)?.label ??
-    (location.pathname === "/discover"
-      ? "Discover"
-      : location.pathname === "/draft"
-        ? "Prepared draft"
-        : "Page not found");
+  const page = pageLabel(location.pathname);
   return (
     <header className="topbar">
       <div className="topbar-title">
@@ -170,9 +165,9 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
           <kbd>TMDB</kbd>
         </Link>
         <LocalStorageStatus />
-        <Link className="button discover-topbar-button" to="/discover">
-          <Search size={15} />
-          Discover
+        <Link className="button discover-topbar-button" to="/movies/new">
+          <Plus size={15} />
+          Add movie
         </Link>
       </div>
     </header>
@@ -187,7 +182,7 @@ export function AppLayout() {
   const main = useRef<HTMLElement>(null);
   const previousPath = useRef(pathname);
   useEffect(() => {
-    document.title = `${navigation.find((route) => route.path === pathname)?.label ?? (pathname === "/discover" ? "Discover" : pathname === "/draft" ? "Prepared draft" : "Not found")} · Kinoquill`;
+    document.title = `${pageLabel(pathname)} · Kinoquill`;
     if (previousPath.current !== pathname) {
       main.current?.focus();
       window.scrollTo(0, 0);
@@ -215,7 +210,11 @@ export function AppLayout() {
               onRetry={() => void storage.retry()}
             />
           )}
-          <Outlet />
+          <Suspense
+            fallback={<LoadingState message="Opening your local cinema…" />}
+          >
+            <Outlet />
+          </Suspense>
         </main>
         <footer className="app-footer">
           <span>

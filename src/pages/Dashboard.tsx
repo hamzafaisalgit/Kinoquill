@@ -15,6 +15,9 @@ import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EmptyState, PageHeader } from "../components/common/States";
 import { useLibrarySummary } from "../hooks/useCatalog";
+import { useLibrary, useMovieSummary } from "../hooks/useCatalog";
+import { MovieCard } from "../components/movies/MovieCard";
+import "../styles/movies.css";
 
 function StatCard({
   label,
@@ -79,6 +82,12 @@ function CinemaArtwork() {
 
 export function Dashboard() {
   const summary = useLibrarySummary();
+  const recent = useLibrary({
+    mediaType: "movie",
+    pageSize: 4,
+    sort: "newest",
+  });
+  const movieSummary = useMovieSummary();
   return (
     <>
       <PageHeader
@@ -126,11 +135,11 @@ export function Dashboard() {
       )}
       <section className="stats-grid" aria-label="Local collection overview">
         <StatCard
-          label="Movies"
+          label="Movies watched"
           icon={Film}
           path="/movies"
-          value={summary.data?.movies}
-          loading={summary.isLoading}
+          value={movieSummary.data?.watched}
+          loading={movieSummary.isLoading}
         />
         <StatCard
           label="TV Shows"
@@ -165,27 +174,41 @@ export function Dashboard() {
               Explore <ArrowUpRight size={14} />
             </Link>
           </div>
-          <div className="collection-empty">
-            <div className="poster-outlines" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
+          {recent.data?.items.length ? (
+            <div className="dashboard-movie-grid">
+              {recent.data.items.map((item) => (
+                <MovieCard key={item.entry.id} item={item} />
+              ))}
             </div>
-            <EmptyState
-              icon={Film}
-              title={
-                summary.data && summary.data.movies + summary.data.shows > 0
-                  ? "Your archive is taking shape."
-                  : "The opening scene is yours."
-              }
-              description="Your titles are stored locally. Poster browsing and full title management arrive in later phases."
-            />
-          </div>
+          ) : (
+            <div className="collection-empty">
+              <div className="poster-outlines" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+              <EmptyState
+                icon={Film}
+                title={
+                  summary.data && summary.data.movies + summary.data.shows > 0
+                    ? "Your archive is taking shape."
+                    : "The opening scene is yours."
+                }
+                description={
+                  recent.error
+                    ? "Recent movies could not be loaded. Check local storage and try again."
+                    : recent.isLoading
+                      ? "Reading your local movie collection…"
+                      : "Add a movie manually or discover it on TMDB. Your personal collection starts with one film."
+                }
+              />
+            </div>
+          )}
           <div className="panel-footnote">
             <span className="tiny-dot" />
-            An empty canvas. Endless possibilities.
+            Your most recently added movies, kept locally.
           </div>
         </section>
         <section className="panel next-panel">
@@ -197,7 +220,7 @@ export function Dashboard() {
             <Sparkles size={20} className="accent" />
           </div>
           <p className="next-description">
-            The foundation is set. These tools arrive in the next chapters.
+            Add a movie now. More tools arrive in the next chapters.
           </p>
           {[
             {
@@ -215,18 +238,37 @@ export function Dashboard() {
               title: "Bring your history",
               text: "Give your Excel & CSV records a new home.",
             },
-          ].map(({ icon: Icon, title, text }) => (
-            <div className="quick-action" key={title} aria-disabled="true">
-              <span className="quick-icon">
-                <Icon size={18} />
-              </span>
-              <div>
-                <strong>{title}</strong>
-                <p>{text}</p>
-                <span className="upcoming-label">COMING IN A LATER PHASE</span>
+          ].map(({ icon: Icon, title, text }, index) =>
+            index === 0 ? (
+              <Link
+                key={title}
+                className="quick-action movie-quick-action"
+                to="/movies/new"
+              >
+                <span className="quick-icon">
+                  <Icon size={18} />
+                </span>
+                <div>
+                  <strong>Add a movie</strong>
+                  <p>{text}</p>
+                  <span className="upcoming-label">OPEN MOVIE ENTRY ↗</span>
+                </div>
+              </Link>
+            ) : (
+              <div className="quick-action" key={title} aria-disabled="true">
+                <span className="quick-icon">
+                  <Icon size={18} />
+                </span>
+                <div>
+                  <strong>{title}</strong>
+                  <p>{text}</p>
+                  <span className="upcoming-label">
+                    COMING IN A LATER PHASE
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
           <div className="next-footer">
             Thoughtfully built. One chapter at a time.
           </div>
@@ -241,8 +283,8 @@ export function Dashboard() {
           <div>
             <h2>Your own point of view.</h2>
             <p>
-              Personal ratings live alongside your stories. Rating controls
-              arrive with movie management.
+              Personal ratings live alongside your stories. Rating controls are
+              available in every movie’s personal record.
             </p>
           </div>
           <span className="outline-pill">Personal ratings · Upcoming</span>
