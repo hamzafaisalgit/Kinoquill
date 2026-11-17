@@ -231,7 +231,7 @@ export function SettingsPage() {
           </div>
           <div>
             <dt>Current edition</dt>
-            <dd>Phase 03 · Discovery & metadata</dd>
+            <dd>Phase 06 · Library & organization</dd>
           </div>
           <div>
             <dt>Local database</dt>

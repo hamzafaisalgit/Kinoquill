@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { libraryReturn } from "../utils/libraryState";
 import {
   ArchiveRestore,
   ArrowLeft,
@@ -19,6 +20,7 @@ import type { DateValue } from "../types/domain";
 import "../styles/movies.css";
 
 export default function MovieDetailsPage() {
+  const location = useLocation();
   const { id = "" } = useParams();
   const query = useMovie(id);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -75,9 +77,12 @@ export default function MovieDetailsPage() {
   return (
     <div className="movie-details-page">
       <div className="movie-details-nav">
-        <Link className="text-link" to="/movies">
+        <Link
+          className="text-link"
+          to={libraryReturn(location.state, "/movies")}
+        >
           <ArrowLeft size={14} />
-          Back to movies
+          {location.state?.returnTo ? "Back to collection" : "Back to movies"}
         </Link>
         <span className="outline-pill">
           {archived ? "ARCHIVED RECORD" : "YOUR PERSONAL CINEMA"}
@@ -179,7 +184,11 @@ export default function MovieDetailsPage() {
             </div>
             {!archived && (
               <div className="movie-detail-actions">
-                <Link className="button" to={`/movies/${id}/edit`}>
+                <Link
+                  className="button"
+                  state={location.state}
+                  to={`/movies/${id}/edit`}
+                >
                   <Pencil size={15} />
                   Edit movie
                 </Link>
@@ -321,7 +330,11 @@ export default function MovieDetailsPage() {
             "No review yet. When you’re ready, add the moments, ideas, or feelings you want to remember."}
         </p>
         {!archived && (
-          <Link className="text-link" to={`/movies/${id}/edit`}>
+          <Link
+            className="text-link"
+            state={location.state}
+            to={`/movies/${id}/edit`}
+          >
             <Pencil size={13} />
             {entry.personalReview ? "Edit my review" : "Write a review"}
           </Link>

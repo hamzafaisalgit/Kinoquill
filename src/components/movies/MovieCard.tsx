@@ -6,7 +6,13 @@ import type { LibraryItem } from "../../types/domain";
 import { catalog } from "../../services/catalog";
 import { PosterArtwork } from "../discovery/PosterArtwork";
 import { movieStatus } from "../../utils/movieStatus";
-export function MovieCard({ item }: { item: LibraryItem }) {
+export function MovieCard({
+  item,
+  returnTo,
+}: {
+  item: LibraryItem;
+  returnTo?: string;
+}) {
   const isShow = item.title.mediaType === "tv";
   const base = isShow ? "/shows" : "/movies";
   const [busy, setBusy] = useState(false);
@@ -27,6 +33,7 @@ export function MovieCard({ item }: { item: LibraryItem }) {
     <article className="movie-card">
       <Link
         to={`${base}/${item.title.id}`}
+        state={returnTo ? { returnTo } : undefined}
         className="movie-card-art"
         aria-label={`Open ${item.title.title}`}
       >
@@ -54,7 +61,10 @@ export function MovieCard({ item }: { item: LibraryItem }) {
         />
       </button>
       <div className="movie-card-info">
-        <Link to={`${base}/${item.title.id}`}>
+        <Link
+          to={`${base}/${item.title.id}`}
+          state={returnTo ? { returnTo } : undefined}
+        >
           <h2>{item.title.title}</h2>
         </Link>
         <div>

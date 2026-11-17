@@ -2,6 +2,7 @@ import { KinoquillDatabase } from "../db/database";
 import { DEFAULT_SETTINGS } from "../types/storage";
 import type { AppSettings, StorageSnapshot } from "../types/storage";
 import { seedGenres } from "../db/seed";
+import { libraryPreferences } from "../utils/libraryState";
 
 export function describeStorageError(error: unknown): string {
   const name = error instanceof Error ? error.name : "";
@@ -123,18 +124,27 @@ export class LocalDatabaseService {
   }
 
   updateSettings = async (
-    patch: Pick<AppSettings, "sidebarCollapsed">,
+    patch: Partial<Pick<AppSettings, "sidebarCollapsed" | "library">>,
   ): Promise<void> => {
     if (this.snapshot.phase !== "ready" || this.snapshot.saving) return;
     this.publish({ saving: true });
     try {
-      if (typeof patch.sidebarCollapsed !== "boolean")
+      if (
+        patch.sidebarCollapsed !== undefined &&
+        typeof patch.sidebarCollapsed !== "boolean"
+      )
         throw new TypeError("Invalid sidebar preference");
       const settings = await this.database.transaction(
         "rw",
         this.database.appSettings,
         async () => {
-          const settings = { ...(await this.readSettings()), ...patch };
+          const settings = {
+            ...(await this.readSettings()),
+            ...patch,
+            ...(patch.library
+              ? { library: libraryPreferences(patch.library) }
+              : {}),
+          };
           await this.database.appSettings.put(settings);
           return settings;
         },

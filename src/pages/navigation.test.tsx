@@ -5,6 +5,7 @@ import { navigation, collectionRoutes } from "../lib/routes";
 import { Dashboard } from "./Dashboard";
 import MoviesPage, { MovieCollection } from "./MoviesPage";
 import ShowsPage from "./ShowsPage";
+import LibraryPage from "./LibraryPage";
 import {
   AnalyticsPage,
   CollectionPage,
@@ -17,7 +18,9 @@ describe("frontend-only navigation", () => {
   const pages = [
     <Dashboard />,
     ...collectionRoutes.map((route) =>
-      route.path === "/movies" ? (
+      route.path === "/library" ? (
+        <LibraryPage />
+      ) : route.path === "/movies" ? (
         <MoviesPage />
       ) : route.path === "/shows" ? (
         <ShowsPage />

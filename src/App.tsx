@@ -39,6 +39,7 @@ const MoviesPage = lazy(() => import("./pages/MoviesPage"));
 const MovieEditorPage = lazy(() => import("./pages/MovieEditorPage"));
 const MovieDetailsPage = lazy(() => import("./pages/MovieDetailsPage"));
 const ShowsPage = lazy(() => import("./pages/ShowsPage"));
+const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const ShowEditorPage = lazy(() => import("./pages/ShowEditorPage"));
 const ShowDetailsPage = lazy(() => import("./pages/ShowDetailsPage"));
 const MovieCollection = lazy(() =>
@@ -63,9 +64,13 @@ const router = createBrowserRouter(
       {collectionRoutes
         .filter(
           (route) =>
-            !["/movies", "/shows", "/watchlist", "/favorites"].includes(
-              route.path,
-            ),
+            ![
+              "/library",
+              "/movies",
+              "/shows",
+              "/watchlist",
+              "/favorites",
+            ].includes(route.path),
         )
         .map((route) => (
           <Route
@@ -83,6 +88,7 @@ const router = createBrowserRouter(
         }
       />
       <Route path="shows" element={<ShowsPage />} />
+      <Route path="library" element={<LibraryPage />} />
       <Route path="shows/new" element={<ShowEditorPage />} />
       <Route path="shows/:id/edit" element={<ShowEditorPage />} />
       <Route path="shows/:id" element={<ShowDetailsPage />} />

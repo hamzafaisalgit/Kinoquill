@@ -40,10 +40,14 @@ function Brand({ compact = false }: { compact?: boolean }) {
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav aria-label="Main navigation">
-      {navigation.map(({ path, label, icon: Icon }, index) => (
+      {navigation.map(({ path, label, icon: Icon }) => (
         <div
           key={path}
-          className={index === 5 || index === 7 ? "nav-separator" : undefined}
+          className={
+            path === "/analytics" || path === "/settings"
+              ? "nav-separator"
+              : undefined
+          }
         >
           <NavLink
             to={path}
@@ -157,12 +161,15 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
       <div className="topbar-actions">
         <Link
           className="search-affordance"
-          to="/discover"
-          aria-label="Discover movies and TV shows on TMDB"
+          to="/library?focus=search"
+          aria-label="Search my library locally"
         >
           <Search size={16} />
-          <span>Discover a story</span>
-          <kbd>TMDB</kbd>
+          <span>Search my library</span>
+          <kbd>LOCAL</kbd>
+        </Link>
+        <Link className="text-link topbar-discover" to="/discover">
+          Discover <small>TMDB</small>
         </Link>
         <LocalStorageStatus />
         <Link
@@ -170,11 +177,17 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
           to={
             location.pathname.startsWith("/shows")
               ? "/shows/new"
-              : "/movies/new"
+              : location.pathname.startsWith("/movies")
+                ? "/movies/new"
+                : "/library?add=1"
           }
         >
           <Plus size={15} />
-          {location.pathname.startsWith("/shows") ? "Add TV show" : "Add movie"}
+          {location.pathname.startsWith("/shows")
+            ? "Add TV show"
+            : location.pathname.startsWith("/movies")
+              ? "Add movie"
+              : "Add title"}
         </Link>
       </div>
     </header>

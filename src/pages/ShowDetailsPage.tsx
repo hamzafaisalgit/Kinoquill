@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { libraryReturn } from "../utils/libraryState";
 import {
   ArrowLeft,
   Heart,
@@ -21,6 +22,7 @@ import type { DateValue } from "../types/domain";
 import "../styles/shows.css";
 
 export default function ShowDetailsPage() {
+  const location = useLocation();
   const { id = "" } = useParams(),
     query = useShowTracking(id),
     navigate = useNavigate();
@@ -91,9 +93,12 @@ export default function ShowDetailsPage() {
   return (
     <div className="movie-details-page tv-details-page">
       <div className="movie-details-nav">
-        <Link className="text-link" to="/shows">
+        <Link
+          className="text-link"
+          to={libraryReturn(location.state, "/shows")}
+        >
           <ArrowLeft size={14} />
-          Back to TV shows
+          {location.state?.returnTo ? "Back to collection" : "Back to TV shows"}
         </Link>
         <span className="outline-pill">
           {archived ? "ARCHIVED SHOW" : "YOUR SERIES JOURNAL"}
@@ -193,7 +198,11 @@ export default function ShowDetailsPage() {
             </div>
             {!archived && (
               <div className="movie-detail-actions">
-                <Link className="button" to={`/shows/${id}/edit`}>
+                <Link
+                  className="button"
+                  state={location.state}
+                  to={`/shows/${id}/edit`}
+                >
                   <Pencil size={15} />
                   Edit show
                 </Link>
@@ -259,15 +268,19 @@ export default function ShowDetailsPage() {
           <p className="tv-status-note">
             All known episodes are recorded. Keep your current status, choose
             Caught Up, or explicitly complete this show in{" "}
-            <Link to={`/shows/${id}/edit`}>Edit show</Link>. Future seasons may
-            still arrive.
+            <Link state={location.state} to={`/shows/${id}/edit`}>
+              Edit show
+            </Link>
+            . Future seasons may still arrive.
           </p>
         )}
         {entry.status === "completed" && summary.percentage !== 100 && (
           <p className="tv-status-note">
             You marked this show Completed. Its episode history is incomplete or
             new episodes are available; your status is preserved.{" "}
-            <Link to={`/shows/${id}/edit`}>Review status</Link>
+            <Link state={location.state} to={`/shows/${id}/edit`}>
+              Review status
+            </Link>
           </p>
         )}
       </section>
@@ -335,7 +348,11 @@ export default function ShowDetailsPage() {
                   ? "Completed"
                   : movieStatus(entry.status)}{" "}
                 {!archived && (
-                  <Link className="text-link" to={`/shows/${id}/edit`}>
+                  <Link
+                    className="text-link"
+                    state={location.state}
+                    to={`/shows/${id}/edit`}
+                  >
                     Update status
                   </Link>
                 )}
@@ -380,7 +397,11 @@ export default function ShowDetailsPage() {
             "No review yet. Keep the moments and characters you want to remember."}
         </p>
         {!archived && (
-          <Link className="text-link" to={`/shows/${id}/edit`}>
+          <Link
+            className="text-link"
+            state={location.state}
+            to={`/shows/${id}/edit`}
+          >
             Edit my review
           </Link>
         )}

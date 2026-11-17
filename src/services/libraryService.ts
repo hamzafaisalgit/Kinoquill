@@ -1,10 +1,9 @@
+import { queryLibrary } from "./libraryQuery";
 import type { KinoquillDatabase } from "../db/database";
 import type {
   LibraryEntry,
-  LibraryItem,
   LibraryQuery,
   LibrarySummary,
-  Title,
   WatchStatus,
 } from "../types/domain";
 import type {
@@ -21,10 +20,17 @@ import {
   validate,
   validateLibraryEdit,
 } from "../utils/validation";
-import { newId, now, normalizeName } from "../utils/normalization";
+import { newId, now } from "../utils/normalization";
 import { ConflictError, ValidationError } from "../utils/errors";
 import { activeEntry, required, reviewFlags, write } from "./domainSupport";
-import { TitleService, paginate, pagination } from "./titleService";
+import { TitleService } from "./titleService";
+import { CategoryService } from "./categoryService";
+export type LibraryTarget = { id: string; revision: number };
+export type BulkAction =
+  | { kind: "favorite"; value: boolean }
+  | { kind: "status"; value: WatchStatus }
+  | { kind: "category_add" | "category_remove"; categoryId: string }
+  | { kind: "archive" };
 
 type TitleSelection =
   { title: TitleInput; titleId?: never } | { titleId: string; title?: never };
@@ -229,95 +235,114 @@ export class LibraryService {
   }
 
   async listLibraryEntries(query: LibraryQuery = {}) {
-    const { page, pageSize } = pagination(query);
+    return queryLibrary(this.db, query);
+  }
+
+  async bulkUpdate(targets: LibraryTarget[], action: BulkAction) {
     if (
-      (query.minRating !== undefined &&
-        (!Number.isFinite(query.minRating) ||
-          query.minRating < 0 ||
-          query.minRating > 10)) ||
-      (query.maxRating !== undefined &&
-        (!Number.isFinite(query.maxRating) ||
-          query.maxRating < 0 ||
-          query.maxRating > 10)) ||
-      (query.minRating !== undefined &&
-        query.maxRating !== undefined &&
-        query.minRating > query.maxRating)
+      !targets.length ||
+      targets.length > 200 ||
+      new Set(targets.map((row) => row.id)).size !== targets.length
     )
-      throw new ValidationError(
-        "Rating filters must be between 0 and 10, with minimum no greater than maximum.",
+      throw new ValidationError("Select 1–200 distinct visible records.");
+    return write(this.db, async () => {
+      const records = await Promise.all(
+        targets.map(async (target) => {
+          const entry = await activeEntry(this.db, target.id);
+          if (entry.revision !== target.revision)
+            throw new ConflictError(
+              "A selected record changed. Refresh the selection before applying this action.",
+            );
+          return entry;
+        }),
       );
+      const categories = new CategoryService(this.db);
+      const titles = await this.db.titles.bulkGet(
+        records.map((entry) => entry.titleId),
+      );
+      if (action.kind === "category_add" || action.kind === "category_remove")
+        await categories.getCategory(action.categoryId);
+      for (const entry of records) {
+        try {
+          if (action.kind === "favorite")
+            await this.updateLibraryEntry(entry.id, {
+              isFavorite: action.value,
+            });
+          else if (action.kind === "status")
+            await this.updateLibraryEntry(entry.id, { status: action.value });
+          else if (action.kind === "archive")
+            await this.softDeleteLibraryEntry(entry.id);
+          else if (action.kind === "category_add") {
+            if (
+              !(await this.db.libraryCategories.get([
+                entry.id,
+                action.categoryId,
+              ]))
+            )
+              await categories.addCategory(entry.id, action.categoryId);
+          } else await categories.removeCategory(entry.id, action.categoryId);
+        } catch (error) {
+          if (error instanceof ValidationError) {
+            const title = titles[records.indexOf(entry)];
+            throw new ValidationError(
+              `${title?.title ?? "A selected title"}: ${error.message} No selected records were changed.`,
+            );
+          }
+          throw error;
+        }
+      }
+      return { updated: records.length };
+    });
+  }
+  async quickUpdate(
+    target: LibraryTarget,
+    patch: LibraryUpdate,
+    categoryIds?: string[],
+  ) {
+    return write(this.db, async () => {
+      const entry = await activeEntry(this.db, target.id);
+      await this.updateLibraryEntry(entry.id, patch, target.revision);
+      if (categoryIds) {
+        if (new Set(categoryIds).size !== categoryIds.length)
+          throw new ValidationError("Choose each category once.");
+        const categories = new CategoryService(this.db),
+          links = await this.db.libraryCategories
+            .where("libraryEntryId")
+            .equals(entry.id)
+            .toArray();
+        for (const id of categoryIds) await categories.getCategory(id);
+        for (const link of links)
+          if (!categoryIds.includes(link.categoryId))
+            await categories.removeCategory(entry.id, link.categoryId);
+        for (const id of categoryIds)
+          if (!links.some((link) => link.categoryId === id))
+            await categories.addCategory(entry.id, id);
+      }
+    });
+  }
+  async getFilterOptions() {
     return this.db.transaction(
       "r",
-      [
-        this.db.libraryEntries,
-        this.db.titles,
-        this.db.titleGenres,
-        this.db.libraryCategories,
-      ],
+      [this.db.titles, this.db.libraryEntries],
       async () => {
-        const entries = await (
-          query.status
-            ? this.db.libraryEntries.where("status").equals(query.status)
-            : this.db.libraryEntries.toCollection()
-        )
-          .filter(
-            (entry) =>
-              entry.deletedAt === null &&
-              (query.favorite === undefined ||
-                entry.isFavorite === query.favorite) &&
-              (query.minRating === undefined ||
-                (entry.personalRating !== null &&
-                  entry.personalRating >= query.minRating)) &&
-              (query.maxRating === undefined ||
-                (entry.personalRating !== null &&
-                  entry.personalRating <= query.maxRating)),
-          )
-          .toArray();
-        const titles = await this.db.titles.bulkGet(
-          entries.map((entry) => entry.titleId),
-        );
-        const genreTitles = query.genreId
-          ? new Set(
-              (
-                await this.db.titleGenres
-                  .where("genreId")
-                  .equals(query.genreId)
-                  .toArray()
-              ).map((link) => link.titleId),
-            )
-          : null;
-        const categoryEntries = query.categoryId
-          ? new Set(
-              (
-                await this.db.libraryCategories
-                  .where("categoryId")
-                  .equals(query.categoryId)
-                  .toArray()
-              ).map((link) => link.libraryEntryId),
-            )
-          : null;
-        const search = normalizeName(query.search ?? "");
-        const items: LibraryItem[] = [];
-        entries.forEach((entry, index) => {
-          const title = titles[index];
-          if (!title)
-            throw new ConflictError(
-              "A library entry references missing metadata. No records were changed.",
-            );
-          if (
-            (!query.mediaType || title.mediaType === query.mediaType) &&
-            (!query.mediaSubtype ||
-              title.mediaSubtype === query.mediaSubtype) &&
-            (query.releaseYear === undefined ||
-              title.releaseYear === query.releaseYear) &&
-            title.normalizedTitle.includes(search) &&
-            (!genreTitles || genreTitles.has(title.id)) &&
-            (!categoryEntries || categoryEntries.has(entry.id))
-          )
-            items.push({ entry, title });
-        });
-        items.sort((a, b) => compareItems(a, b, query.sort ?? "newest"));
-        return paginate(items, page, pageSize);
+        const entries = await this.db.libraryEntries
+            .filter((entry) => entry.deletedAt === null)
+            .toArray(),
+          titles = await this.db.titles.bulkGet(
+            entries.map((entry) => entry.titleId),
+          );
+        return {
+          languages: [
+            ...new Set(
+              titles.flatMap((title) =>
+                title?.originalLanguage ? [title.originalLanguage] : [],
+              ),
+            ),
+          ].sort(),
+          countries: [
+            ...new Set(titles.flatMap((title) => title?.countries ?? [])),
+          ].sort(),
+        };
       },
     );
   }
@@ -356,42 +381,4 @@ export class LibraryService {
       },
     );
   }
-}
-
-function nullableCompare(
-  a: number | null,
-  b: number | null,
-  descending: boolean,
-): number {
-  if (a === null) return b === null ? 0 : 1;
-  if (b === null) return -1;
-  return descending ? b - a : a - b;
-}
-function compareItems(
-  a: { title: Title; entry: LibraryEntry },
-  b: { title: Title; entry: LibraryEntry },
-  sort: NonNullable<LibraryQuery["sort"]>,
-) {
-  let result: number;
-  if (sort.startsWith("title_"))
-    result =
-      a.title.normalizedTitle.localeCompare(b.title.normalizedTitle) *
-      (sort === "title_desc" ? -1 : 1);
-  else if (sort.startsWith("rating_"))
-    result = nullableCompare(
-      a.entry.personalRating,
-      b.entry.personalRating,
-      sort === "rating_desc",
-    );
-  else if (sort.startsWith("year_"))
-    result = nullableCompare(
-      a.title.releaseYear,
-      b.title.releaseYear,
-      sort === "year_desc",
-    );
-  else
-    result =
-      a.entry.dateAdded.localeCompare(b.entry.dateAdded) *
-      (sort === "newest" ? -1 : 1);
-  return result || a.entry.id.localeCompare(b.entry.id);
 }

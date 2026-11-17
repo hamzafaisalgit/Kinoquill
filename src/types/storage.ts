@@ -1,6 +1,8 @@
+import type { LibraryPreferences } from "../utils/libraryState";
 export interface AppSettings {
   id: "preferences";
   sidebarCollapsed: boolean;
+  library?: LibraryPreferences;
 }
 
 export interface LocalMetadata {

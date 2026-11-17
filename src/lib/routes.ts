@@ -7,6 +7,7 @@ import {
   ChartNoAxesCombined,
   ArrowLeftRight,
   Settings,
+  Library,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -22,6 +23,16 @@ export interface CollectionRoute {
 }
 
 export const collectionRoutes: CollectionRoute[] = [
+  {
+    path: "/library",
+    label: "Library",
+    icon: Library,
+    eyebrow: "THE PERSONAL COLLECTION",
+    description: "Every movie and show, beautifully kept.",
+    emptyTitle: "Your collection begins with one story.",
+    emptyDescription: "Add a movie or TV show, manually or from TMDB.",
+    action: "Add title",
+  },
   {
     path: "/movies",
     label: "Movies",

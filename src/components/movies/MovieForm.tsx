@@ -5,6 +5,7 @@ import {
   useBeforeUnload,
   useBlocker,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import { ArrowLeft, Check, Heart, Save, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ export function MovieForm({
   const base = isShow ? "/shows" : "/movies";
   const noun = isShow ? "show" : "movie";
   const navigate = useNavigate();
+  const location = useLocation();
   const genres = useGenres(),
     categories = useCategories(),
     people = usePeople();
@@ -148,7 +150,10 @@ export function MovieForm({
           ? `${isShow ? "Show" : "Movie"} updated`
           : `${isShow ? "Show" : "Movie"} added to your collection`,
       );
-      navigate(`${base}/${result.title.id}`, { replace: true });
+      navigate(`${base}/${result.title.id}`, {
+        replace: true,
+        state: location.state,
+      });
     } catch (error) {
       if (error instanceof DuplicateTitleError) setDuplicates(error);
       else

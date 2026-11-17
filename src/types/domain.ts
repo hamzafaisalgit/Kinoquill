@@ -153,7 +153,11 @@ export type LibrarySort =
   | "newest"
   | "oldest"
   | "year_asc"
-  | "year_desc";
+  | "year_desc"
+  | "watched_desc"
+  | "watched_asc"
+  | "runtime_desc"
+  | "runtime_asc";
 export interface LibraryQuery {
   search?: string;
   mediaType?: MediaType;
@@ -162,6 +166,19 @@ export interface LibraryQuery {
   favorite?: boolean;
   genreId?: string;
   categoryId?: string;
+  genreIds?: string[];
+  genreMatch?: "any" | "all";
+  categoryIds?: string[];
+  categoryMatch?: "any" | "all";
+  unrated?: boolean;
+  minYear?: number;
+  maxYear?: number;
+  languages?: string[];
+  countries?: string[];
+  addedFrom?: string;
+  addedTo?: string;
+  watchedFrom?: string;
+  watchedTo?: string;
   releaseYear?: number;
   minRating?: number;
   maxRating?: number;
@@ -172,6 +189,10 @@ export interface LibraryQuery {
 export interface LibraryItem {
   entry: LibraryEntry;
   title: Title;
+  genres?: Genre[];
+  people?: Person[];
+  categories?: Category[];
+  watchedDate?: DateValue;
 }
 export interface LibrarySummary {
   movies: number;

@@ -41,6 +41,39 @@ export class CategoryService {
   listCategories() {
     return this.db.categories.orderBy("normalizedName").toArray();
   }
+  async listWithUsage() {
+    return this.db.transaction(
+      "r",
+      [this.db.categories, this.db.libraryEntries, this.db.libraryCategories],
+      async () => {
+        const categories = await this.listCategories(),
+          active = new Set(
+            await this.db.libraryEntries
+              .filter((entry) => entry.deletedAt === null)
+              .primaryKeys(),
+          ),
+          links = await this.db.libraryCategories.toArray();
+        return categories.map((category) => ({
+          ...category,
+          count: links.filter(
+            (link) =>
+              link.categoryId === category.id &&
+              active.has(link.libraryEntryId),
+          ).length,
+        }));
+      },
+    );
+  }
+  private async touchEntries(ids: string[]) {
+    for (const id of new Set(ids)) {
+      const entry = await this.db.libraryEntries.get(id);
+      if (entry)
+        await this.db.libraryEntries.update(id, {
+          revision: entry.revision + 1,
+          updatedAt: now(),
+        });
+    }
+  }
   async getEntryCategories(libraryEntryId: string) {
     return this.db.transaction(
       "r",
@@ -73,12 +106,28 @@ export class CategoryService {
         throw new ConflictError("A category with this name already exists.");
       const category = { ...values, normalizedName, updatedAt: now() };
       await this.db.categories.put(category);
+      await this.touchEntries(
+        (
+          await this.db.libraryCategories
+            .where("categoryId")
+            .equals(id)
+            .toArray()
+        ).map((link) => link.libraryEntryId),
+      );
       return category;
     });
   }
   deleteCategory(id: string) {
     return write(this.db, async () => {
       await this.getCategory(id);
+      await this.touchEntries(
+        (
+          await this.db.libraryCategories
+            .where("categoryId")
+            .equals(id)
+            .toArray()
+        ).map((link) => link.libraryEntryId),
+      );
       await this.db.libraryCategories.where("categoryId").equals(id).delete();
       await this.db.categories.delete(id);
     });
@@ -90,6 +139,7 @@ export class CategoryService {
       if (await this.db.libraryCategories.get([libraryEntryId, categoryId]))
         throw new ConflictError("This category is already attached.");
       await this.db.libraryCategories.add({ libraryEntryId, categoryId });
+      await this.touchEntries([libraryEntryId]);
     });
   }
   removeCategory(libraryEntryId: string, categoryId: string) {
@@ -97,6 +147,7 @@ export class CategoryService {
       await activeEntry(this.db, libraryEntryId);
       await this.getCategory(categoryId);
       await this.db.libraryCategories.delete([libraryEntryId, categoryId]);
+      await this.touchEntries([libraryEntryId]);
     });
   }
 }

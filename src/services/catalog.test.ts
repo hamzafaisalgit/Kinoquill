@@ -64,15 +64,20 @@ afterEach(async () => {
 });
 
 describe("schema and migration integrity", () => {
-  it('does not resurrect seeded genres the user explicitly deleted', async () => {
-    await seedGenres(db)
-    const genre = await db.genres.where('normalizedName').equals('action').first()
-    await services.genres.deleteGenre(genre!.id)
-    await seedGenres(db)
-    expect(await db.genres.where('normalizedName').equals('action').count()).toBe(0)
-  })
+  it("does not resurrect seeded genres the user explicitly deleted", async () => {
+    await seedGenres(db);
+    const genre = await db.genres
+      .where("normalizedName")
+      .equals("action")
+      .first();
+    await services.genres.deleteGenre(genre!.id);
+    await seedGenres(db);
+    expect(
+      await db.genres.where("normalizedName").equals("action").count(),
+    ).toBe(0);
+  });
   it("defines all Phase 2 stores without future-phase list/import stores", () => {
-    expect(db.verno).toBe(2);
+    expect(db.verno).toBe(3);
     expect(db.tables.map((table) => table.name).sort()).toEqual(
       [
         "appSettings",
@@ -89,6 +94,8 @@ describe("schema and migration integrity", () => {
         "seasons",
         "episodes",
         "episodeProgress",
+        "showMetadata",
+        "seasonTracking",
       ].sort(),
     );
   });

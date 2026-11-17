@@ -1,6 +1,16 @@
-# Kinoquill local data architecture — Phases 2–5
+# Kinoquill local data architecture — Phases 2–6
 
 All personal data lives in the browser's IndexedDB. `kinoquill_local` retains its original name. The database retains versions 1 (settings/local metadata), 2 (domain stores), and 3 (additive TV metadata/tracking stores). No store is cleared, recreated, or reset during initialization. Only the genre reference catalog is seeded. A transactional `genre-catalog-v1` metadata marker makes seeding idempotent and prevents explicitly deleted catalog genres from being resurrected on reload. No movie, show, viewing session, or personal record is automatically generated.
+
+## Phase 6 query and organization additions
+
+The schema remains **v3**. Optional `appSettings.library` contains validated grid/table choice, preferred sort, and visible columns. Missing or malformed display preferences use defaults and the Title column remains visible. No new stores, resets, or migrations are needed. Active filters and pagination live in URL parameters; these are validated before querying. Removed category/genre IDs are ignored by the service and cleared by the explorer.
+
+`LibraryService.listLibraryEntries` delegates its read implementation to `libraryQuery.ts`. It uses the status index where applicable, excludes archived entries, batches metadata/relationship reads, filters the candidate set, sorts with stable entry-ID ties, and returns only a bounded page to React. Large candidate sets use bulk cursor reads instead of thousands of individual IDB requests. The shared explorer renders 24 results; the service retains its existing 1–200 page-size contract.
+
+Search folds accents and case without changing stored identity normalization. Words match partial text across titles, people, genres, categories, personal reviews, and session notes. Genre/category groups have explicit ANY/ALL semantics; different filter groups combine with AND. Missing numeric values never satisfy numeric ranges. Viewing ranges use overlap against the known precision of actual completion/session dates, excluding unknown dates. The displayed/sorted viewing date is the latest known completion or session date, compared by the start of its recorded interval; no exact day is fabricated. Null dates/ratings/years/runtime sort last in either direction.
+
+`LibraryService.quickUpdate` validates a revisioned target and patches only explicitly changed personal fields, with optional category synchronization in the same transaction. `bulkUpdate` checks distinct active targets and revisions, reuses library/category services, and commits or rolls back the full selection. Invalid Completed transitions reject the selection with a named-record message. There are no network calls in write transactions. Category add/remove/rename/delete touches affected library revisions so an older open form cannot silently replace changed category associations. Category deletion removes links only; titles and viewing histories stay intact.
 
 ## Phase 5 additions
 
@@ -119,7 +129,7 @@ Pure progress utilities count unique watched episodes, never fabricate unknown s
 
 ## Reactive UI
 
-`src/hooks/useCatalog.ts` exports useLibrary, useTitle, useTitles, useGenres, useCategories, useFavorites, useWatchlist, and useLibrarySummary. Each returns `{ data, isLoading, error }`, waits for storage initialization, delegates queries to services, and uses Dexie's `useLiveQuery` subscriptions. No polling or backend calls are involved. The dashboard shows actual active movie/show totals, watchlist size, and favorites, with loading/error states. Full management forms and filtering interfaces remain deferred.
+`src/hooks/useCatalog.ts` exports catalog-backed library, title, genre, category, summary, movie, show, and Continue Watching queries. Each returns `{ data, isLoading, error }`, waits for storage initialization, delegates queries to services, and uses Dexie's `useLiveQuery` subscriptions. No polling or backend calls are involved. The dashboard shows actual counts and Continue Watching. Shared movie/TV forms and the Phase 6 explorer use these services; UI components contain no raw IndexedDB writes.
 
 ## Verification and persistence limits
 

@@ -173,7 +173,7 @@ export function Dashboard() {
               <h2>Your collection</h2>
               <p>A growing archive of your kind of cinema.</p>
             </div>
-            <Link className="text-link" to="/movies">
+            <Link className="text-link" to="/library">
               Explore <ArrowUpRight size={14} />
             </Link>
           </div>
