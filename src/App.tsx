@@ -15,6 +15,8 @@ import "./App.css";
 const Dashboard = lazy(() =>
   import("./pages/Dashboard").then((module) => ({ default: module.Dashboard })),
 );
+const DiscoverPage = lazy(() => import("./pages/DiscoverPage"));
+const TitleDraftPage = lazy(() => import("./pages/TitleDraftPage"));
 
 export default function App() {
   return (
@@ -41,6 +43,28 @@ export default function App() {
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="import-export" element={<ImportExportPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route
+            path="discover"
+            element={
+              <Suspense
+                fallback={<LoadingState message="Opening discovery…" />}
+              >
+                <DiscoverPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="draft"
+            element={
+              <Suspense
+                fallback={
+                  <LoadingState message="Opening your prepared draft…" />
+                }
+              >
+                <TitleDraftPage />
+              </Suspense>
+            }
+          />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

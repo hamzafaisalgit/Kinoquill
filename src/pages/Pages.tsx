@@ -25,6 +25,8 @@ import {
 } from "../components/common/States";
 import type { CollectionRoute } from "../lib/routes";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { TmdbSettings } from "../components/discovery/TmdbSettings";
+import "../styles/discovery.css";
 
 export function CollectionPage({ route }: { route: CollectionRoute }) {
   return (
@@ -33,7 +35,19 @@ export function CollectionPage({ route }: { route: CollectionRoute }) {
         eyebrow={route.eyebrow}
         title={route.label}
         description={route.description}
-        action={<UpcomingButton>{route.action}</UpcomingButton>}
+        action={
+          route.path === "/movies" || route.path === "/shows" ? (
+            <Link
+              className="button"
+              to={`/discover?type=${route.path === "/shows" ? "tv" : "movie"}`}
+            >
+              Discover {route.path === "/shows" ? "shows" : "movies"}{" "}
+              <ArrowUpRight size={15} />
+            </Link>
+          ) : (
+            <UpcomingButton>{route.action}</UpcomingButton>
+          )
+        }
       />
       <section
         className={`panel library-scaffold ${route.path === "/favorites" ? "favorites-scaffold" : ""}`}
@@ -217,7 +231,7 @@ export function SettingsPage() {
           </div>
           <div>
             <dt>Current edition</dt>
-            <dd>Phase 02 · Local data engine</dd>
+            <dd>Phase 03 · Discovery & metadata</dd>
           </div>
           <div>
             <dt>Local database</dt>
@@ -270,7 +284,7 @@ export function SettingsPage() {
           </div>
           <div>
             <dt>Metadata provider</dt>
-            <dd>TMDB integration in a later phase</dd>
+            <dd>TMDB · optional, configured below</dd>
           </div>
         </dl>
         {storage.error && (
@@ -280,6 +294,7 @@ export function SettingsPage() {
           />
         )}
       </section>
+      <TmdbSettings />
       <section className="panel local-data-panel">
         <ShieldCheck size={24} className="accent" />
         <div>

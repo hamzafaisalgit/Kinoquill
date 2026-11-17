@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   ArrowLeftToLine,
   ArrowRightFromLine,
   Menu,
-  Plus,
   Search,
   X,
 } from "lucide-react";
 import { navigation } from "../../lib/routes";
 import { LocalStorageStatus } from "../common/LocalStorageStatus";
-import { ErrorState, UpcomingButton } from "../common/States";
+import { ErrorState } from "../common/States";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 
 function Brand({ compact = false }: { compact?: boolean }) {
@@ -131,7 +130,7 @@ export function MobileNavigation({ onClose }: { onClose: () => void }) {
         </button>
       </div>
       <Navigation onNavigate={onClose} />
-      <p className="drawer-note">YOUR PERSONAL CINEMA · PHASE 01</p>
+      <p className="drawer-note">YOUR PERSONAL CINEMA · CHAPTER 03</p>
     </dialog>
   );
 }
@@ -140,7 +139,11 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   const location = useLocation();
   const page =
     navigation.find((route) => route.path === location.pathname)?.label ??
-    "Page not found";
+    (location.pathname === "/discover"
+      ? "Discover"
+      : location.pathname === "/draft"
+        ? "Prepared draft"
+        : "Page not found");
   return (
     <header className="topbar">
       <div className="topbar-title">
@@ -157,18 +160,20 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
         <strong>{page}</strong>
       </div>
       <div className="topbar-actions">
-        <span
+        <Link
           className="search-affordance"
-          tabIndex={0}
-          aria-label="Search your collection: coming in a later phase"
-          title="Global search is coming in a later phase"
+          to="/discover"
+          aria-label="Discover movies and TV shows on TMDB"
         >
           <Search size={16} />
-          <span>Search your collection</span>
-          <kbd>Soon</kbd>
-        </span>
+          <span>Discover a story</span>
+          <kbd>TMDB</kbd>
+        </Link>
         <LocalStorageStatus />
-        <UpcomingButton icon={Plus}>Add title</UpcomingButton>
+        <Link className="button discover-topbar-button" to="/discover">
+          <Search size={15} />
+          Discover
+        </Link>
       </div>
     </header>
   );
@@ -182,7 +187,7 @@ export function AppLayout() {
   const main = useRef<HTMLElement>(null);
   const previousPath = useRef(pathname);
   useEffect(() => {
-    document.title = `${navigation.find((route) => route.path === pathname)?.label ?? "Not found"} · Kinoquill`;
+    document.title = `${navigation.find((route) => route.path === pathname)?.label ?? (pathname === "/discover" ? "Discover" : pathname === "/draft" ? "Prepared draft" : "Not found")} · Kinoquill`;
     if (previousPath.current !== pathname) {
       main.current?.focus();
       window.scrollTo(0, 0);

@@ -25,7 +25,42 @@ npm.cmd run preview
 
 `test` runs Vitest once. `build` runs TypeScript before creating `dist/`. `preview` serves the production build locally. A production static host must route unknown application paths to `index.html` for React Router.
 
-## Phase 2 — local data engine
+## Phase 3 — discovery and metadata
+
+Open **Discover** in the topbar, or **Discover movies/shows** from the collection pages. `/discover` provides debounced live search with All titles, Movies, and TV shows filters, keyboard result navigation, validated poster URLs with local fallbacks, loading/error states, selected-title details, editable director/creator suggestions, and a manual metadata alternative. `/draft` shows the prepared metadata and allows editing or discarding it. Discovery does not create title or library records, and it never changes existing personal ratings or reviews.
+
+### Configure TMDB
+
+1. Sign in to your own [TMDB account and API settings](https://www.themoviedb.org/settings/api), apply for API access if needed, and obtain the **API Read Access Token**. See [TMDB's official authentication guide](https://developer.themoviedb.org/docs/authentication-application).
+2. In Kinoquill, open **Settings → Movie & TV Metadata — TMDB**.
+3. Paste the token (without the word `Bearer`) and choose **Test connection**. Connected is shown only after a real validation request succeeds. Show/hide controls affect the input; it is cleared after the token is accepted into memory.
+4. Return to Discover. Enter at least two characters; search starts after 350 ms without typing. Outdated requests are cancelled, and detailed metadata/credits are fetched only after selecting a result.
+
+The credential is held only in this tab's memory. Reloading the page removes it. There is no persistence opt-in, Vite token variable, credential storage in IndexedDB/localStorage, custom proxy, or backend. A browser-held token is visible to scripts and browser developer tools; frontend code cannot provide server-side secret protection. Requests use an Authorization header only to the fixed TMDB API origin, reject redirects, and do not include tokens in URLs or error messages. Without a token, no TMDB API request is made. Local records and manual metadata preparation remain independent of TMDB.
+
+### Drafts, duplicates, and caching
+
+Selecting a result opens a metadata preview. Director/creator suggestions are not selected automatically: add the names you want, edit them, or leave them blank. **Use this title** checks the existing Phase 2 duplicate service before preparing a typed draft. Strong external-ID matches show the existing local information and block a separate draft. Possible name/year matches require an explicit confirmation. No existing record is merged or overwritten.
+
+**Enter manually** prepares the same draft contract from a title, media type, optional year/runtime/overview, local genre selections, and optional directors/creators. A draft may be incomplete; final library validation belongs to the later save workflow. The prepared screen allows metadata editing and clearly states that nothing has been saved. Drafts are session-only and disappear on reload; revisiting `/draft` after reload shows a recovery screen rather than claiming persistence. The full movie form and actual personal-library save remain Phase 4; TV management remains Phase 5.
+
+Selected metadata is cached only in memory for five minutes, with a maximum of 24 details records. Search responses are not kept indefinitely, and no image blobs or credentials enter the cache. Changing/removing the token clears the cache; Settings also provides **Clear metadata cache**. Artwork uses validated TMDB image paths and may require internet access even when the personal library is available offline. Network/CORS restrictions, rate limiting, invalid credentials, timeouts, and service errors have explicit messages and manual alternatives. No unauthorized proxy fallback is used.
+
+Important new files: `src/services/tmdb/` (client, schemas/mapping, search/details, images, errors, cache), `src/services/titleDraft.ts`, the draft/session/preparation hooks, `src/components/discovery/`, `src/pages/DiscoverPage.tsx`, `src/pages/TitleDraftPage.tsx`, and `src/styles/discovery.css`. Existing shell, collection pages, Settings, and routing were extended. **No dependencies were added.** The database remains schema v2 without a reset or migration.
+
+### Attribution and verification
+
+Settings contains TMDB's approved logo and the required notice: “This product uses the TMDB API but is not endorsed or certified by TMDB.” The local `public/tmdb-logo.svg` is an unmodified copy of TMDB's [official short-logo asset](https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg). Attribution guidance: [TMDB FAQ](https://developer.themoviedb.org/docs/faq).
+
+Phase 3 checks use `npm.cmd run typecheck`, `npm.cmd run lint`, `npm.cmd run build`, and the focused regression command below. Five targeted TMDB tests cover movie/TV mapping, missing data/cache behavior, safe authorization failures, and reuse of local duplicate identities. Existing navigation/storage regressions run alongside them:
+
+```powershell
+npm.cmd test -- src/services/tmdb/tmdb.test.ts src/pages/navigation.test.tsx src/services/localDatabase.test.ts
+```
+
+All **27 selected tests** passed. A separate browser-profile smoke check verified no-token discovery at desktop/mobile widths, manual draft preparation and editing, token input controls, reload recovery, no unintended library writes, and zero TMDB API requests without a token. Live authenticated TMDB searching was **not tested** because no real token was configured. Browser authentication/CORS behavior must still be verified with the user's token and permitted TMDB access. No full movie forms, TV progress interfaces, spreadsheet parsing, or charts were implemented in this phase.
+
+## Phase 2 — local data engine (preserved)
 
 The production database is now **schema version 2**. Both version definitions are retained, with a tested upgrade preserving existing settings and metadata. The twelve new domain stores cover titles, genres, people, title/genre and title/person associations, categories, library/category associations, library entries, viewing sessions, seasons, episodes, and episode progress.
 
@@ -115,8 +150,8 @@ legacy-data/                      Ignored, non-runtime preservation archive
 Phase 1 verification completed: `npm.cmd run typecheck`, `npm.cmd test` (22 tests passed), `npm.cmd run lint`, and `npm.cmd run build` all succeeded. `node tools/verify-ui.mjs` passed the route, viewport, persistence, unavailable-storage, offline-navigation, and request-audit checks. Rendered desktop, mobile, and Settings screenshots were inspected.
 
 1. **Foundation (complete):** remove retired architecture, establish IndexedDB, preserve the premium shell.
-2. **Local data models (current):** normalized local entities, shared validation, persistence services, and CRUD logic.
-3. **TMDB:** optional direct-browser metadata search, permitted API usage and attribution, with honest credential limitations. Browser code cannot keep tokens secret; no credential entry exists yet.
+2. **Local data models (complete):** normalized local entities, shared validation, persistence services, and CRUD logic.
+3. **TMDB (current):** optional direct-browser discovery, metadata previews, manual drafts, session-only token configuration, and honest credential limitations.
 4. **Movies:** functional movie creation/editing, genres, directors, ratings, reviews, and statuses.
 5. **TV shows:** seasons, episodes, progress, and show ratings.
 6. **Organization:** library views, searching, sorting, filters, watchlist, favorites, and categories.
