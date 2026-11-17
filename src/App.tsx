@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { AppLayout } from "./components/layout/AppLayout";
-import { Dashboard } from "./pages/Dashboard";
+import { LoadingState } from "./components/common/States";
 import {
   CollectionPage,
   AnalyticsPage,
@@ -11,12 +12,25 @@ import {
 import { collectionRoutes } from "./lib/routes";
 import "./App.css";
 
+const Dashboard = lazy(() =>
+  import("./pages/Dashboard").then((module) => ({ default: module.Dashboard })),
+);
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route index element={<Dashboard />} />
+          <Route
+            index
+            element={
+              <Suspense
+                fallback={<LoadingState message="Loading your local cinema…" />}
+              >
+                <Dashboard />
+              </Suspense>
+            }
+          />
           {collectionRoutes.map((route) => (
             <Route
               key={route.path}

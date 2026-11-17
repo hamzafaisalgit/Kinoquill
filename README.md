@@ -13,7 +13,7 @@ npm.cmd install
 npm.cmd run dev
 ```
 
-Open the Local URL printed by Vite, normally **http://localhost:5173**. On shells without PowerShell execution-policy restrictions, `npm install` and `npm run dev` work equivalently. Node.js is used only for frontend tooling. No environment variables or credentials are required in Phase 1.
+Open the Local URL printed by Vite, normally **http://localhost:5173**. On shells without PowerShell execution-policy restrictions, `npm install` and `npm run dev` work equivalently. Node.js is used only for frontend tooling. No environment variables or credentials are required.
 
 ```powershell
 npm.cmd run typecheck
@@ -25,7 +25,21 @@ npm.cmd run preview
 
 `test` runs Vitest once. `build` runs TypeScript before creating `dist/`. `preview` serves the production build locally. A production static host must route unknown application paths to `index.html` for React Router.
 
-## Phase 1 implementation
+## Phase 2 — local data engine
+
+The production database is now **schema version 2**. Both version definitions are retained, with a tested upgrade preserving existing settings and metadata. The twelve new domain stores cover titles, genres, people, title/genre and title/person associations, categories, library/category associations, library entries, viewing sessions, seasons, episodes, and episode progress.
+
+Typed domain services now implement atomic collection creation, reads and patches, relationship integrity, controlled historical intake, duplicate detection, soft deletion/restoration, local filters/search/sorts/pagination, and TV progress. Zod centralizes validation; Dexie React hooks provide reactive query results and actual dashboard counts. New dependencies: `zod` and `dexie-react-hooks`. Existing layout, routes, branding, storage status, and sidebar preference are preserved. No personal sample records are seeded.
+
+See [DATA_ARCHITECTURE.md](docs/DATA_ARCHITECTURE.md) for all stores, keys, models, service methods, validation policies, date precision, transaction scope, archive behavior, duplicate resolution, and usage examples for future phases. The new source lives in `src/types/domain.ts`, `src/utils/`, `src/db/seed.ts`, `src/services/*Service.ts`, `src/services/domainSupport.ts`, `src/services/catalog.ts`, and `src/hooks/useCatalog.ts`. Domain integration tests are in `src/services/catalog.test.ts`; existing storage tests now verify v2 compatibility.
+
+Phase 2 verification: **106 tests passed**; TypeScript, ESLint, and the production build succeeded. Browser regression checks passed at 1440, 1024, 768, and 390 pixels, including live numeric dashboard counts, routes, storage failures, offline navigation after assets load, and preference persistence. Desktop and mobile dashboard screenshots were inspected. The dashboard is loaded as a separate chunk, keeping the production build below Vite's default per-chunk warning threshold.
+
+Dependency audit limitation: npm currently reports 12 high-severity findings in the existing build/lint/test dependency chain, originating in picomatch. The registry's latest reported picomatch version is also affected. The audit's suggested changes downgrade the existing frontend tooling; no forced downgrade or unrelated stack replacement was applied. These findings remain unresolved.
+
+Manual completed entries require a rating at half-point increments from 0 to 10 and at least one genre. Historical ratings preserve values such as 8.7 and incomplete entries receive review flags. Patches never erase omitted values. Soft deletion preserves ratings, reviews, dates, categories, viewing history and TV progress. External IDs are scoped to media type; possible duplicate names need explicit confirmation. All related writes commit or roll back together, and stale revision checks are available for edits.
+
+## Phase 1 foundation (preserved)
 
 - Preserved React, Vite, TypeScript, Tailwind, the cinematic midnight/amber design, all eight application routes, and the 404 page.
 - Rebranded sidebar, dashboard, HTML metadata, browser titles, favicon, and settings as Kinoquill.
@@ -40,14 +54,14 @@ npm.cmd run preview
 
 ## IndexedDB and data safety
 
-The stable database name is **`kinoquill_local`**, schema **version 1**. It contains only:
+The stable database name is **`kinoquill_local`**, schema **version 2**. Its original stores remain intact:
 
 | Store           | Key   | Purpose                                                                        |
 | --------------- | ----- | ------------------------------------------------------------------------------ |
 | `appSettings`   | `id`  | One `preferences` record with `sidebarCollapsed: boolean`; default is expanded |
 | `localMetadata` | `key` | A storage-check timestamp written and read to verify actual availability       |
 
-`src/db/database.ts` defines Dexie's versioned schema. `src/services/localDatabase.ts` owns initialization, reads, transactional preference updates, error reporting, subscriptions, and database version information. `src/hooks/useLocalStorage.ts` connects React to that service; despite the hook's name, persistence uses IndexedDB, never the browser's localStorage API. UI components do not access raw IndexedDB APIs.
+`src/db/database.ts` defines Dexie's versioned schema. `src/services/localDatabase.ts` owns initialization, transactional preference updates, storage checks, and genre seeding. `src/hooks/useLocalStorage.ts` connects React to that service; despite the hook's name, persistence uses IndexedDB, never the browser's localStorage API. Domain records use the separate typed catalog services. UI components do not access raw IndexedDB APIs.
 
 Initialization runs once per page lifecycle, with concurrent requests deduplicated. There is no polling or backend connectivity check. Blocked opens have a finite timeout; schema updates must use additive Dexie versions and preserve records. A tab receiving a database version change closes its connection and explains that a reload is needed.
 
@@ -69,7 +83,7 @@ SHA-256: `9162605579D0125F0F66A2C188BFF2164A7E571A46D6B6BAC22E8A5FF580AA92`.
 
 ## Stack
 
-React, TypeScript, Vite, Tailwind CSS v4, React Router, Lucide React, and Dexie. Vitest and fake-indexeddb provide isolated tests. No charting, form, spreadsheet, or server packages were added. The local service's subscriptions provide the reactive settings view without requiring a separate Dexie React integration package.
+React, TypeScript, Vite, Tailwind CSS v4, React Router, Lucide React, Dexie, dexie-react-hooks, and Zod. Vitest and fake-indexeddb provide isolated tests. No charting, form, spreadsheet, or server packages were added. The Phase 1 settings subscription remains intact; catalog hooks use `useLiveQuery`.
 
 ## Project structure
 
@@ -92,7 +106,7 @@ legacy-data/                      Ignored, non-runtime preservation archive
 
 ## Tests and browser QA
 
-`npm.cmd test` runs isolated IndexedDB tests with unique test database names. They cover initialization, schema version, default settings, saves/reads/updates, recreation of service and database instances, failed opens, missing storage, blocked opens, quota errors, retries, and a non-destructive test migration. Navigation tests cover every page and the 404 recovery link without requesting any API. Test cleanup deletes only uniquely named test databases, never the real browser database.
+`npm.cmd test` runs isolated IndexedDB tests with unique test database names. In addition to the original storage and navigation coverage, the domain suite verifies v1→v2 migration, genre seeding, CRUD, manual and historical validation, references, archives, duplicate conflicts, rollback after late writes fail, concurrent creation, reactive updates, filters, sorts, pagination, and a generated 5,000-title test. Test cleanup deletes only uniquely named test databases, never the real browser database.
 
 `node tools/verify-ui.mjs` additionally checks a running frontend using a task-owned headless Chrome profile with DevTools on port 9222. It verifies all routes at 1440, 1024, 768, and 390 pixels; horizontal overflow; mobile focus/Escape/navigation; settings and sidebar persistence through reloads; loaded-app navigation without network access; unavailable IndexedDB; branding; absence of old API requests; and browser runtime errors. Dashboard screenshots and a Settings screenshot go to ignored `.qa/`. It requires an already-running Chrome DevTools session and does not install a browser or add runtime dependencies. Use a dedicated QA browser profile, not your everyday profile. `UI_ORIGIN` and `CHROME_DEBUG_ORIGIN` customize the optional QA addresses.
 
@@ -100,8 +114,8 @@ legacy-data/                      Ignored, non-runtime preservation archive
 
 Phase 1 verification completed: `npm.cmd run typecheck`, `npm.cmd test` (22 tests passed), `npm.cmd run lint`, and `npm.cmd run build` all succeeded. `node tools/verify-ui.mjs` passed the route, viewport, persistence, unavailable-storage, offline-navigation, and request-audit checks. Rendered desktop, mobile, and Settings screenshots were inspected.
 
-1. **Foundation (current):** remove retired architecture, establish IndexedDB, preserve the premium shell.
-2. **Local data models:** normalized local entities, shared validation, persistence services, and CRUD logic.
+1. **Foundation (complete):** remove retired architecture, establish IndexedDB, preserve the premium shell.
+2. **Local data models (current):** normalized local entities, shared validation, persistence services, and CRUD logic.
 3. **TMDB:** optional direct-browser metadata search, permitted API usage and attribution, with honest credential limitations. Browser code cannot keep tokens secret; no credential entry exists yet.
 4. **Movies:** functional movie creation/editing, genres, directors, ratings, reviews, and statuses.
 5. **TV shows:** seasons, episodes, progress, and show ratings.
@@ -111,4 +125,4 @@ Phase 1 verification completed: `npm.cmd run typecheck`, `npm.cmd test` (22 test
 9. **Personal tools:** history, rewatches, lists, saved views, preferences, and backup/restore.
 10. **Final polish:** accessibility, responsive refinements, performance, offline/PWA support, and broader testing.
 
-Phase 1 intentionally contains no title tables or operational collection editing, TMDB calls, spreadsheet processing, analytics calculations, or backup implementation.
+Phase 2 provides the local data engine and live dashboard counts. Full collection-management forms, TMDB calls, spreadsheet processing, analytics charts, and backup/export interfaces remain deferred to their assigned phases.

@@ -217,7 +217,7 @@ export function SettingsPage() {
           </div>
           <div>
             <dt>Current edition</dt>
-            <dd>Phase 01 · Foundation</dd>
+            <dd>Phase 02 · Local data engine</dd>
           </div>
           <div>
             <dt>Local database</dt>
@@ -285,9 +285,8 @@ export function SettingsPage() {
         <div>
           <h2>Your archive stays with you.</h2>
           <p>
-            Preferences are stored on this device in this browser. Personal
-            library records will use the same local-first approach in Phase 2.
-            Cloud synchronization is not enabled.
+            Preferences and personal library records are stored on this device
+            in this browser. Cloud synchronization is not enabled.
           </p>
           <p>
             Clearing site data, changing browsers, or changing the site address

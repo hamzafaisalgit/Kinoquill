@@ -111,6 +111,7 @@ try {
         await until(
           "document.querySelector('[role=status]')?.textContent.includes('Local Storage Ready')",
         );
+        await until("[...document.querySelectorAll('.stat-card strong')].length === 4 && [...document.querySelectorAll('.stat-card strong')].every(element => /^\\d+$/.test(element.textContent))");
         const image = await send("Page.captureScreenshot", {
           format: "png",
           captureBeyondViewport: true,

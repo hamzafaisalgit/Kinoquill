@@ -14,15 +14,20 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EmptyState, PageHeader } from "../components/common/States";
+import { useLibrarySummary } from "../hooks/useCatalog";
 
 function StatCard({
   label,
   icon: Icon,
   path,
+  value,
+  loading,
 }: {
   label: string;
   icon: LucideIcon;
   path: string;
+  value?: number;
+  loading: boolean;
 }) {
   return (
     <Link to={path} className="stat-card">
@@ -30,9 +35,15 @@ function StatCard({
         <Icon size={19} strokeWidth={1.5} />
         <ArrowUpRight size={15} />
       </div>
-      <strong>—</strong>
+      <strong aria-busy={loading}>{loading ? "…" : (value ?? "—")}</strong>
       <span>{label}</span>
-      <small>Awaiting your collection</small>
+      <small>
+        {loading
+          ? "Reading local library"
+          : value === undefined
+            ? "Count unavailable"
+            : "Active local library"}
+      </small>
     </Link>
   );
 }
@@ -67,6 +78,7 @@ function CinemaArtwork() {
 }
 
 export function Dashboard() {
+  const summary = useLibrarySummary();
   return (
     <>
       <PageHeader
@@ -90,20 +102,57 @@ export function Dashboard() {
           </p>
           <div className="hero-note">
             <Library size={17} />
-            <span>Your collection is ready for its first story.</span>
+            <span>
+              {summary.data && summary.data.movies + summary.data.shows > 0
+                ? "Your stories, kept on this device."
+                : "Your collection is ready for its first story."}
+            </span>
           </div>
         </div>
         <CinemaArtwork />
       </section>
       <div className="section-label">
         <h2>At a glance</h2>
-        <span>Initial empty-library preview · no collection data queried</span>
+        <span>
+          {summary.error
+            ? "Local counts unavailable"
+            : "Live from your local library"}
+        </span>
       </div>
-      <section className="stats-grid" aria-label="Collection overview preview">
-        <StatCard label="Movies" icon={Film} path="/movies" />
-        <StatCard label="TV Shows" icon={Tv} path="/shows" />
-        <StatCard label="Watchlist" icon={Bookmark} path="/watchlist" />
-        <StatCard label="Favorites" icon={Heart} path="/favorites" />
+      {summary.error && (
+        <p className="error-state" role="alert">
+          {summary.error.message}
+        </p>
+      )}
+      <section className="stats-grid" aria-label="Local collection overview">
+        <StatCard
+          label="Movies"
+          icon={Film}
+          path="/movies"
+          value={summary.data?.movies}
+          loading={summary.isLoading}
+        />
+        <StatCard
+          label="TV Shows"
+          icon={Tv}
+          path="/shows"
+          value={summary.data?.shows}
+          loading={summary.isLoading}
+        />
+        <StatCard
+          label="Watchlist"
+          icon={Bookmark}
+          path="/watchlist"
+          value={summary.data?.watchlist}
+          loading={summary.isLoading}
+        />
+        <StatCard
+          label="Favorites"
+          icon={Heart}
+          path="/favorites"
+          value={summary.data?.favorites}
+          loading={summary.isLoading}
+        />
       </section>
       <div className="dashboard-bottom">
         <section className="panel collection-panel">
@@ -126,8 +175,12 @@ export function Dashboard() {
             </div>
             <EmptyState
               icon={Film}
-              title="The opening scene is yours."
-              description="Once title entry arrives, your posters and personal records will fill this space. Every great collection begins somewhere."
+              title={
+                summary.data && summary.data.movies + summary.data.shows > 0
+                  ? "Your archive is taking shape."
+                  : "The opening scene is yours."
+              }
+              description="Your titles are stored locally. Poster browsing and full title management arrive in later phases."
             />
           </div>
           <div className="panel-footnote">
@@ -188,8 +241,8 @@ export function Dashboard() {
           <div>
             <h2>Your own point of view.</h2>
             <p>
-              Personal ratings will live alongside your stories. Nothing rated
-              yet — rating tools arrive with movie management.
+              Personal ratings live alongside your stories. Rating controls
+              arrive with movie management.
             </p>
           </div>
           <span className="outline-pill">Personal ratings · Upcoming</span>

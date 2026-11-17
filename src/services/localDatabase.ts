@@ -1,6 +1,7 @@
 import { KinoquillDatabase } from "../db/database";
 import { DEFAULT_SETTINGS } from "../types/storage";
 import type { AppSettings, StorageSnapshot } from "../types/storage";
+import { seedGenres } from "../db/seed";
 
 export function describeStorageError(error: unknown): string {
   const name = error instanceof Error ? error.name : "";
@@ -98,6 +99,7 @@ export class LocalDatabaseService {
           return settings;
         },
       );
+      await seedGenres(this.database);
       this.publish({ phase: "ready", settings, error: null });
     } catch (error) {
       this.database.close();
