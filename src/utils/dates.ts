@@ -18,3 +18,8 @@ export function dateBounds(date: DateValue): [string, string] | null {
     return [`${date.value}-01`, `${date.value}-31`];
   return [date.value, date.value];
 }
+/** Compare date-only air dates using the browser's local calendar day. */
+export function localToday() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}

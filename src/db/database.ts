@@ -13,10 +13,12 @@ import type {
   Season,
   Episode,
   EpisodeProgress,
+  ShowMetadata,
+  SeasonTracking,
 } from "../types/domain";
 
 export const DATABASE_NAME = "kinoquill_local";
-export const DATABASE_VERSION = 2;
+export const DATABASE_VERSION = 3;
 
 export class KinoquillDatabase extends Dexie {
   appSettings!: Table<AppSettings, string>;
@@ -33,6 +35,8 @@ export class KinoquillDatabase extends Dexie {
   seasons!: Table<Season, string>;
   episodes!: Table<Episode, string>;
   episodeProgress!: Table<EpisodeProgress, string>;
+  showMetadata!: Table<ShowMetadata, string>;
+  seasonTracking!: Table<SeasonTracking, [string, string]>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -57,6 +61,11 @@ export class KinoquillDatabase extends Dexie {
       episodes: "&id,seasonId,&[seasonId+episodeNumber]",
       episodeProgress:
         "&id,libraryEntryId,episodeId,&[libraryEntryId+episodeId]",
+    });
+    // Additive: existing titles, movie records, seasons and progress stay untouched.
+    this.version(3).stores({
+      showMetadata: "&titleId",
+      seasonTracking: "[libraryEntryId+seasonId],libraryEntryId,seasonId",
     });
   }
 }

@@ -27,7 +27,7 @@ export function MovieCollection({
 }) {
   const [page, setPage] = useState(1);
   const result = useLibrary({
-    mediaType: "movie",
+    ...(kind === "movies" ? { mediaType: "movie" as const } : {}),
     ...(kind === "favorites"
       ? { favorite: true }
       : kind === "watchlist"
@@ -58,8 +58,8 @@ export function MovieCollection({
           kind === "movies"
             ? "A growing archive of films, feelings, and first impressions."
             : kind === "favorites"
-              ? "Your favorite movies, kept in a place of their own."
-              : "Movies you’re looking forward to. Ready when you are."
+              ? "Your favorite movies and shows, kept in a place of their own."
+              : "Movies and shows you’re looking forward to. Ready when you are."
         }
         action={
           <Link className="button" to="/movies/new">
@@ -71,7 +71,7 @@ export function MovieCollection({
       <div className="movies-collection-toolbar">
         <span>
           {result.data
-            ? `${result.data.total} ${result.data.total === 1 ? "movie" : "movies"} · stored on this device`
+            ? `${result.data.total} ${kind === "movies" ? "movies" : "titles"} · stored on this device`
             : "Reading your local collection…"}
         </span>
         <Link className="text-link" to="/discover?type=movie">
@@ -142,9 +142,9 @@ export function MovieCollection({
               page > 1
                 ? "Your collection changed. Return to its first page."
                 : kind === "favorites"
-                  ? "Mark a saved movie as a favorite and it will appear here."
+                  ? "Mark a saved movie or show as a favorite and it will appear here."
                   : kind === "watchlist"
-                    ? "Save a movie with Watchlist status to keep it for later."
+                    ? "Save a movie or show with Watchlist status to keep it for later."
                     : "Add a movie in your own words, or begin with metadata from TMDB."
             }
           >
@@ -171,7 +171,10 @@ export function MovieCollection({
       {kind === "movies" && <RecentlyDeletedMovies />}
       {kind !== "movies" && (
         <p className="movies-footer-note">
-          Showing movies. TV show management arrives in Phase 5.
+          Movies and TV shows share this collection.{" "}
+          <Link className="text-link" to="/shows/new">
+            Add a TV show
+          </Link>
         </p>
       )}
     </>

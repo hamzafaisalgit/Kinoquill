@@ -99,3 +99,12 @@ export function usePeople() {
 export function useMovieSummary() {
   return useCatalogQuery(() => catalog.movies.getSummary(), []);
 }
+export function useShow(id: string) {
+  return useCatalogQuery(() => catalog.shows.getShow(id), [id]);
+}
+export function useShowTracking(id: string) {
+  return useCatalogQuery(() => catalog.shows.tracking(id), [id]);
+}
+export function useContinueWatching() {
+  return useCatalogQuery(() => catalog.shows.continueWatching(), []);
+}

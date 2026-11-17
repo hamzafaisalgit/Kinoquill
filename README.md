@@ -25,6 +25,26 @@ npm.cmd run preview
 
 `test` runs Vitest once. `build` runs TypeScript before creating `dist/`. `preview` serves the production build locally. A production static host must route unknown application paths to `index.html` for React Router.
 
+## Phase 5 — TV shows and progress
+
+**TV Shows → Add TV show** offers TV-only TMDB discovery or manual entry. Both continue into the shared add/edit form. Choose **TV Series** or **TV Mini Series**; K-Dramas, Anime, and similar groups are personal categories. Title, genre, and status are required. **Completed** requires an overall rating for ordinary entries; ratings use 0–10 in half points, zero is valid, and unchanged historical precision is preserved. Creators, air dates, totals, artwork, personal dates, review, categories, and seasons are optional.
+
+- **Watchlist** means saved for later; **Watching** means actively tracking; **Caught Up** means current with the episodes you intend to watch. **Completed** is an explicit personal decision. **On Hold** and **Dropped** preserve progress. Episode progress never changes status automatically.
+- Show details include expandable seasons, manually added/edited episodes, watched checkboxes and optional watched dates, separate season ratings, and confirmed bulk actions. Overall ratings remain independent of season ratings.
+- Exact quick tracking requires a complete episode catalog and marks the **first N episodes** watched, with the rest unwatched, after confirmation. With incomplete metadata, quick tracking uses a labeled **approximate count**. One mode contributes per season: approximate counts replace exact counts in totals, while exact records remain stored. Switching back requires confirmation; no episode identities are fabricated.
+- Progress uses known episode totals, handles unknown totals without fake percentages, and excludes **Specials (season 0)** by default. Details let you include Specials explicitly. Totals include future episodes and say so; a next episode is offered only with sufficient exact metadata and a known released air date.
+- **Continue Watching** on Dashboard and TV Shows opens the relevant season and highlights the next episode when determinable. Otherwise it says **Continue tracking**. Favorites and Watchlist now include both movies and shows.
+- Editing preserves IDs, date added, episode progress, and season ratings. **Archive show** asks for confirmation; restore the same record from **TV Shows → Archived shows**. No permanent deletion is provided.
+- TMDB-selected season summaries are saved with the show. **Load missing episodes from TMDB** fetches one requested season before a local transaction, adds missing episodes, and preserves existing corrections and progress. Manual tracking works without a token. API reference: [TMDB season details](https://developer.themoviedb.org/reference/tv-season-details).
+
+IndexedDB is now **schema v3**, with additive `showMetadata` and `seasonTracking` stores. Existing v1/v2 definitions and records are retained; no database reset occurs. No new dependencies were needed. Shared persistence is in `src/services/titleRecordService.ts`, TV orchestration in `showService.ts`, and tracking UI in `src/components/shows/`. See [data architecture](docs/DATA_ARCHITECTURE.md) for storage and calculation details.
+
+Six targeted TV checks cover validation/creation, exact and approximate progress, edit/archive preservation, duplicates/rollback, the v2→v3 migration, and requested-season metadata loading. TypeScript, ESLint, the production build, **39 selected regressions**, and **9 existing TV-service checks** passed. Browser checks used a separate profile for creation, seasons/episodes, bulk and approximate progress, season ratings, Continue Watching, refresh persistence, editing, archiving/restoration, TV draft handoff/recovery, and widths 1440/768/390. Live authenticated TMDB access remains unverified without a real token. Phases 1–5 are implemented; advanced library filters, spreadsheet import, analytics, and rewatch UI remain for later phases.
+
+```powershell
+npm.cmd test -- src/services/showService.test.ts src/services/movieService.test.ts src/services/tmdb/tmdb.test.ts src/pages/navigation.test.tsx src/services/localDatabase.test.ts
+```
+
 ## Phase 4 — movie management
 
 **Movies → Add movie** offers TMDB search or manual entry. Dashboard and topbar actions open the same workflow. A prepared movie draft from Discover continues into the shared add/edit form with its artwork, external IDs, genres, and runtime intact. Nothing enters the library until **Save movie** commits successfully.
@@ -112,7 +132,7 @@ Manual completed entries require a rating at half-point increments from 0 to 10 
 
 ## IndexedDB and data safety
 
-The stable database name is **`kinoquill_local`**, schema **version 2**. Its original stores remain intact:
+The stable database name is **`kinoquill_local`**, current schema **version 3**. Its original stores remain intact:
 
 | Store           | Key   | Purpose                                                                        |
 | --------------- | ----- | ------------------------------------------------------------------------------ |

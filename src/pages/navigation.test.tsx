@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { navigation, collectionRoutes } from "../lib/routes";
 import { Dashboard } from "./Dashboard";
 import MoviesPage, { MovieCollection } from "./MoviesPage";
+import ShowsPage from "./ShowsPage";
 import {
   AnalyticsPage,
   CollectionPage,
@@ -18,6 +19,8 @@ describe("frontend-only navigation", () => {
     ...collectionRoutes.map((route) =>
       route.path === "/movies" ? (
         <MoviesPage />
+      ) : route.path === "/shows" ? (
+        <ShowsPage />
       ) : route.path === "/favorites" ? (
         <MovieCollection kind="favorites" />
       ) : route.path === "/watchlist" ? (

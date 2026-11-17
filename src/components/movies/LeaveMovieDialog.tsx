@@ -20,7 +20,7 @@ export function LeaveMovieDialog({ blocker }: { blocker: Blocker }) {
     >
       <FilePenLine size={25} className="accent" />
       <p className="eyebrow">YOUR UNFINISHED CHAPTER</p>
-      <h2 id="leave-movie-heading">Keep working on this movie?</h2>
+      <h2 id="leave-movie-heading">Keep working on this record?</h2>
       <p>
         You have unsaved changes. Stay to finish your entry, or leave and
         discard those changes. Your saved library is unchanged.

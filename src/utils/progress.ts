@@ -1,57 +1,43 @@
-import type { Episode, EpisodeProgress, Season } from "../types/domain";
-
+import type {
+  Episode,
+  EpisodeProgress,
+  Season,
+  SeasonTracking,
+  ShowMetadata,
+} from "../types/domain";
+import { seasonProgress, tvProgress } from "./tvProgress";
+/** Phase 2 public names delegate to the shared Phase 5 calculation engine. */
 export function calculateSeasonProgress(
   season: Season,
   episodes: Episode[],
   progress: EpisodeProgress[],
+  tracking?: SeasonTracking,
 ) {
-  const episodeIds = new Set(
-    episodes
-      .filter((episode) => episode.seasonId === season.id)
-      .map((episode) => episode.id),
-  );
-  const watched = new Set(
-    progress
-      .filter((item) => item.watched && episodeIds.has(item.episodeId))
-      .map((item) => item.episodeId),
-  ).size;
-  // A partial episode catalog provides a lower bound, never a fabricated total.
-  const totalKnownEpisodes = season.episodeCount;
-  const percentage =
-    totalKnownEpisodes !== null && totalKnownEpisodes > 0
-      ? Math.min(100, (watched / totalKnownEpisodes) * 100)
-      : null;
+  const result = seasonProgress(season, episodes, progress, tracking);
   return {
-    watchedEpisodes: watched,
-    cataloguedEpisodes: episodeIds.size,
-    totalKnownEpisodes,
-    percentage,
+    ...result,
+    watchedEpisodes: result.watched,
+    cataloguedEpisodes: result.rows.length,
+    totalKnownEpisodes: result.total,
   };
 }
 export function calculateShowProgress(
   seasons: Season[],
   episodes: Episode[],
   progress: EpisodeProgress[],
+  tracking: SeasonTracking[] = [],
+  metadata?: ShowMetadata,
 ) {
-  const results = seasons.map((season) =>
-    calculateSeasonProgress(season, episodes, progress),
-  );
-  const watchedEpisodes = results.reduce(
-    (sum, result) => sum + result.watchedEpisodes,
-    0,
-  );
-  const totalKnownEpisodes =
-    results.length &&
-    results.every((result) => result.totalKnownEpisodes !== null)
-      ? results.reduce((sum, result) => sum + result.totalKnownEpisodes!, 0)
-      : null;
+  const result = tvProgress(seasons, episodes, progress, tracking, metadata);
   return {
-    watchedEpisodes,
-    totalKnownEpisodes,
-    percentage:
-      totalKnownEpisodes !== null && totalKnownEpisodes > 0
-        ? (watchedEpisodes / totalKnownEpisodes) * 100
-        : null,
-    seasons: results,
+    ...result,
+    watchedEpisodes: result.watched,
+    totalKnownEpisodes: result.total,
+    seasons: result.seasons.map((item) => ({
+      ...item,
+      watchedEpisodes: item.watched,
+      totalKnownEpisodes: item.total,
+      cataloguedEpisodes: item.rows.length,
+    })),
   };
 }

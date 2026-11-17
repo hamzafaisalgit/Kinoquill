@@ -18,6 +18,8 @@ import { useLibrarySummary } from "../hooks/useCatalog";
 import { useLibrary, useMovieSummary } from "../hooks/useCatalog";
 import { MovieCard } from "../components/movies/MovieCard";
 import "../styles/movies.css";
+import "../styles/shows.css";
+import { ContinueWatching } from "../components/shows/ContinueWatching";
 
 function StatCard({
   label,
@@ -163,6 +165,7 @@ export function Dashboard() {
           loading={summary.isLoading}
         />
       </section>
+      <ContinueWatching />
       <div className="dashboard-bottom">
         <section className="panel collection-panel">
           <div className="panel-header">
@@ -239,19 +242,23 @@ export function Dashboard() {
               text: "Give your Excel & CSV records a new home.",
             },
           ].map(({ icon: Icon, title, text }, index) =>
-            index === 0 ? (
+            index <= 1 ? (
               <Link
                 key={title}
                 className="quick-action movie-quick-action"
-                to="/movies/new"
+                to={index === 0 ? "/movies/new" : "/shows/new"}
               >
                 <span className="quick-icon">
                   <Icon size={18} />
                 </span>
                 <div>
-                  <strong>Add a movie</strong>
+                  <strong>
+                    {index === 0 ? "Add a movie" : "Add a TV show"}
+                  </strong>
                   <p>{text}</p>
-                  <span className="upcoming-label">OPEN MOVIE ENTRY ↗</span>
+                  <span className="upcoming-label">
+                    {index === 0 ? "OPEN MOVIE ENTRY ↗" : "OPEN SHOW ENTRY ↗"}
+                  </span>
                 </div>
               </Link>
             ) : (
@@ -287,7 +294,7 @@ export function Dashboard() {
               available in every movie’s personal record.
             </p>
           </div>
-          <span className="outline-pill">Personal ratings · Upcoming</span>
+          <span className="outline-pill">Personal ratings · Local</span>
         </article>
         <article className="panel journal-preview">
           <Clock3 size={22} strokeWidth={1.4} />

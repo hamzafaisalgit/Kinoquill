@@ -8,11 +8,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import {
-  EmptyState,
-  PageHeader,
-  UpcomingButton,
-} from "../components/common/States";
+import { EmptyState, PageHeader } from "../components/common/States";
 import { ManualDraftForm } from "../components/discovery/ManualDraftForm";
 import { PosterArtwork } from "../components/discovery/PosterArtwork";
 import { DuplicateReview } from "../components/discovery/DuplicateReview";
@@ -201,7 +197,7 @@ function PreparedSummary({
               The full{" "}
               {draft.metadata.mediaType === "movie"
                 ? "movie form is ready for your personal record"
-                : "TV form arrives in Phase 5"}
+                : "TV form is ready for your viewing record"}
               . Ratings, reviews, viewing dates, and a real library save happen
               there. This draft has not created a title or personal entry.
             </p>
@@ -217,7 +213,9 @@ function PreparedSummary({
               Continue to movie form <ArrowUpRight size={14} />
             </Link>
           ) : (
-            <UpcomingButton>Save to library · Phase 5</UpcomingButton>
+            <Link className="button" to="/shows/new?draft=1">
+              Continue to TV form <ArrowUpRight size={14} />
+            </Link>
           )}
           <button className="text-button" onClick={onDiscard}>
             <Trash2 size={14} />

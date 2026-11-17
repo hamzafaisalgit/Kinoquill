@@ -165,9 +165,16 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
           <kbd>TMDB</kbd>
         </Link>
         <LocalStorageStatus />
-        <Link className="button discover-topbar-button" to="/movies/new">
+        <Link
+          className="button discover-topbar-button"
+          to={
+            location.pathname.startsWith("/shows")
+              ? "/shows/new"
+              : "/movies/new"
+          }
+        >
           <Plus size={15} />
-          Add movie
+          {location.pathname.startsWith("/shows") ? "Add TV show" : "Add movie"}
         </Link>
       </div>
     </header>

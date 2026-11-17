@@ -109,10 +109,12 @@ export function DirectorInput({
   options,
   value,
   onChange,
+  label = "Directors",
 }: {
   options: Person[];
   value: DirectorChoice[];
   onChange: (value: DirectorChoice[]) => void;
+  label?: string;
 }) {
   const [query, setQuery] = useState("");
   const results = query.trim()
@@ -127,7 +129,7 @@ export function DirectorInput({
   return (
     <fieldset className="movie-multi-select">
       <legend>
-        Directors{" "}
+        {label}{" "}
         <span className="optional-note">Optional · manually controlled</span>
       </legend>
       <div className="selected-chips">
@@ -186,7 +188,7 @@ export function DirectorInput({
         </button>
       )}
       <p className="preference-note">
-        Removing a chip only unlinks this movie. Existing people are kept.
+        Removing a chip only unlinks this title. Existing people are kept.
         Matching names can identify different people.
       </p>
     </fieldset>
@@ -211,7 +213,7 @@ export function RatingInput({
       <legend>
         <Star size={15} />
         My rating{" "}
-        <span>{required ? "Required for watched movies" : "Optional"}</span>
+        <span>{required ? "Required for completed titles" : "Optional"}</span>
       </legend>
       <div className="rating-readout">
         <strong>
@@ -277,19 +279,25 @@ export function DateWatchedInput({
   value,
   onChange,
   error,
+  label = "Date watched",
 }: {
   value: DateValue;
   onChange: (value: DateValue) => void;
   error?: string;
+  label?: string;
 }) {
   return (
     <fieldset className="movie-date">
       <legend>
-        Date watched <span className="optional-note">Optional</span>
+        {label} <span className="optional-note">Optional</span>
       </legend>
       <div>
         <select
-          aria-label="Viewing date precision"
+          aria-label={
+            label === "Date watched"
+              ? "Viewing date precision"
+              : `${label} precision`
+          }
           value={value.precision}
           onChange={(event) => {
             const precision = event.target.value as DateValue["precision"];
@@ -305,7 +313,7 @@ export function DateWatchedInput({
         </select>
         {value.precision !== "unknown" && (
           <input
-            aria-label="Date watched"
+            aria-label={label}
             type={
               value.precision === "day"
                 ? "date"
@@ -323,8 +331,9 @@ export function DateWatchedInput({
         )}
       </div>
       <p className="preference-note">
-        No date is assumed. An explicitly recorded date updates your first-watch
-        session, without changing rewatches.
+        {label === "Date watched"
+          ? "No date is assumed. An explicitly recorded date updates your first-watch session, without changing rewatches."
+          : "No date is assumed. Partial dates retain their original precision."}
       </p>
       {error && (
         <p className="movie-field-error" role="alert">

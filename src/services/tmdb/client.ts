@@ -73,7 +73,7 @@ export async function tmdbGet<S extends z.ZodType>(
       "Configure a TMDB Read Access Token in Settings, or enter a title manually.",
     );
   if (
-    !/^\/(authentication|search\/(movie|tv|multi)|(movie|tv)\/[1-9]\d*)$/.test(
+    !/^\/(authentication|search\/(movie|tv|multi)|(movie|tv)\/[1-9]\d*|tv\/[1-9]\d*\/season\/\d+)$/.test(
       path,
     )
   )

@@ -10,13 +10,17 @@ import {
 } from "./validation";
 import { UNKNOWN_DATE } from "./dates";
 import { movieImage } from "./movieImages";
+import type { ShowMetadata } from "../types/domain";
+import { showMetadataSchema } from "../services/showService";
 
 export interface MovieFormValues extends MovieSaveInput {
   countriesText: string;
+  show: Omit<ShowMetadata, "titleId">;
 }
 export function initialMovieValues(
-  movie?: MovieRecord,
+  movie?: MovieRecord & { show?: ShowMetadata },
   draft?: TitleDraft,
+  mediaType: "movie" | "tv" = "movie",
 ): MovieFormValues {
   const metadata = movie
     ? metadataFromTitle(movie.title)
@@ -26,7 +30,16 @@ export function initialMovieValues(
         mediaSubtype: "movie",
       });
   return {
-    metadata: { ...metadata, mediaType: "movie", mediaSubtype: "movie" },
+    metadata: {
+      ...metadata,
+      mediaType,
+      mediaSubtype:
+        mediaType === "movie"
+          ? "movie"
+          : metadata.mediaSubtype === "tv_miniseries"
+            ? "tv_miniseries"
+            : "tv_series",
+    },
     library: movie
       ? {
           status: movie.entry.status,
@@ -51,13 +64,23 @@ export function initialMovieValues(
         name: person.name,
       })) ??
       draft?.people
-        .filter((person) => person.role === "director")
+        .filter(
+          (person) =>
+            person.role === (mediaType === "tv" ? "creator" : "director"),
+        )
         .map((person) => ({ name: person.name })) ??
       [],
     categoryNames: movie?.categories.map((category) => category.name) ?? [],
     watchedDate: movie ? firstWatchedDate(movie) : UNKNOWN_DATE,
     dateChanged: false,
     countriesText: metadata.countries?.join(", ") ?? "",
+    show: {
+      lastAirDate: movie?.show?.lastAirDate ?? draft?.tv?.lastAirDate ?? null,
+      totalSeasons: movie?.show?.totalSeasons ?? draft?.tv?.seasonCount ?? null,
+      totalEpisodes:
+        movie?.show?.totalEpisodes ?? draft?.tv?.episodeCount ?? null,
+      includeSpecials: movie?.show?.includeSpecials ?? false,
+    },
   };
 }
 export const movieFormResolver =
@@ -112,7 +135,10 @@ export const movieFormResolver =
       const library = libraryCreateSchema.safeParse(values.library);
       if (!library.success)
         library.error.issues.forEach((issue) =>
-          error(`library.${issue.path.join(".")}`, issue.message),
+          error(
+            `library.${issue.path.join(".")}${issue.path.length === 1 && ["startedAt", "completedAt"].includes(String(issue.path[0])) ? ".value" : ""}`,
+            issue.message,
+          ),
         );
     }
     const date = dateSchema.safeParse(values.watchedDate);
@@ -121,6 +147,19 @@ export const movieFormResolver =
         "watchedDate.value",
         "Please provide a valid viewing date, or choose Unknown.",
       );
+    if (values.metadata.mediaType === "tv") {
+      const show = showMetadataSchema.safeParse(values.show);
+      if (!show.success)
+        show.error.issues.forEach((issue) =>
+          error(`show.${issue.path.join(".")}`, issue.message),
+        );
+      for (const key of ["startedAt", "completedAt"] as const)
+        if (!dateSchema.safeParse(values.library[key]).success)
+          error(
+            `library.${key}.value`,
+            "Enter a valid date or choose Unknown.",
+          );
+    }
     return Object.keys(errors).length
       ? { values: {}, errors: errors as FieldErrors<MovieFormValues> }
       : { values, errors: {} };

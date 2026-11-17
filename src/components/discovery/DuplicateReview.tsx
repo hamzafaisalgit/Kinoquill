@@ -46,11 +46,14 @@ function ExistingRecord({ match }: { match: DuplicateMatch }) {
           </div>
         )}
       </dl>
-      {match.title.mediaType === "movie" && (
-        <Link className="text-link" to={`/movies/${match.title.id}`}>
-          Open existing movie ↗
+      {
+        <Link
+          className="text-link"
+          to={`/${match.title.mediaType === "movie" ? "movies" : "shows"}/${match.title.id}`}
+        >
+          Open existing {match.title.mediaType === "movie" ? "movie" : "show"} ↗
         </Link>
-      )}
+      }
     </details>
   );
 }

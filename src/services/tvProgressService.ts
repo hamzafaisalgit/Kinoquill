@@ -94,6 +94,13 @@ export class TvProgressService {
         throw new ReferentialIntegrityError(
           "Episode does not belong to this TV show.",
         );
+      if (
+        (await this.db.seasonTracking.get([entry.id, season.id]))?.mode ===
+        "approximate"
+      )
+        throw new ConflictError(
+          "Switch this season to exact tracking before changing individual episodes.",
+        );
       const current = await this.db.episodeProgress
         .where("[libraryEntryId+episodeId]")
         .equals([entry.id, episode.id])
@@ -205,6 +212,8 @@ export class TvProgressService {
         this.db.seasons,
         this.db.episodes,
         this.db.episodeProgress,
+        this.db.seasonTracking,
+        this.db.showMetadata,
       ],
       async () => {
         const entry = await activeEntry(this.db, libraryEntryId);
@@ -222,7 +231,18 @@ export class TvProgressService {
           .where("libraryEntryId")
           .equals(libraryEntryId)
           .toArray();
-        return calculateShowProgress(seasons, episodes, progress);
+        const tracking = await this.db.seasonTracking
+          .where("libraryEntryId")
+          .equals(entry.id)
+          .toArray();
+        const metadata = await this.db.showMetadata.get(title.id);
+        return calculateShowProgress(
+          seasons,
+          episodes,
+          progress,
+          tracking,
+          metadata,
+        );
       },
     );
   }

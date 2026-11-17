@@ -80,3 +80,43 @@ export const getMovieDetails = (id: number, signal?: AbortSignal) =>
   getTitleDetails(id, "movie", signal);
 export const getShowDetails = (id: number, signal?: AbortSignal) =>
   getTitleDetails(id, "tv", signal);
+
+/** Called only when requested for one saved season; fetch before any local transaction. */
+export async function getSeasonEpisodes(
+  showId: number,
+  seasonNumber: number,
+  signal?: AbortSignal,
+) {
+  if (
+    !Number.isSafeInteger(showId) ||
+    showId < 1 ||
+    !Number.isSafeInteger(seasonNumber) ||
+    seasonNumber < 0
+  )
+    throw new TmdbError(
+      "invalid_response",
+      "Invalid show or season identifier.",
+    );
+  const response = await tmdbGet(
+    `/tv/${showId}/season/${seasonNumber}`,
+    z.object({
+      season_number: z.number().int().nonnegative(),
+      episodes: z.array(
+        z.object({
+          episode_number: z.number().int().positive(),
+          name: z.string().nullable().optional(),
+          runtime: z.number().finite().nonnegative().nullable().optional(),
+          air_date: z.string().nullable().optional(),
+        }),
+      ),
+    }),
+    { language: "en-US" },
+    signal,
+  );
+  if (response.season_number !== seasonNumber)
+    throw new TmdbError(
+      "invalid_response",
+      "TMDB returned a different season.",
+    );
+  return response.episodes;
+}

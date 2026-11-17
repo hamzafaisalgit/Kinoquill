@@ -76,6 +76,9 @@ export const navigation = [
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 export function pageLabel(path: string) {
+  if (path === "/shows/new") return "Add TV show";
+  if (path.startsWith("/shows/"))
+    return path.endsWith("/edit") ? "Edit show" : "Show details";
   return (
     navigation.find((route) => route.path === path)?.label ??
     (path === "/discover"

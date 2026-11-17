@@ -38,6 +38,16 @@ export function MetadataPreview({
       source: "tmdb",
       preparedAt: new Date().toISOString(),
       confirmedPossibleDuplicate: false,
+      ...(!isMovie
+        ? {
+            tv: {
+              lastAirDate: details.lastAirDate,
+              seasonCount: details.seasonCount,
+              episodeCount: details.episodeCount,
+              seasons: details.seasons,
+            },
+          }
+        : {}),
     };
   }
   return (

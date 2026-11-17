@@ -10,6 +10,7 @@ import { ArrowLeft, Check, Heart, Save, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { TitleDraft } from "../../services/tmdb/types";
 import type { MovieRecord } from "../../services/movieService";
+import type { ShowMetadata } from "../../types/domain";
 import { catalog } from "../../services/catalog";
 import { clearTitleDraft } from "../../services/titleDraft";
 import { initialMovieValues, movieFormResolver } from "../../utils/movieForm";
@@ -33,15 +34,22 @@ import "../../styles/movies.css";
 export function MovieForm({
   movie,
   draft,
+  mediaType = "movie",
 }: {
-  movie?: MovieRecord;
+  movie?: MovieRecord & { show?: ShowMetadata };
   draft?: TitleDraft;
+  mediaType?: "movie" | "tv";
 }) {
+  const isShow = mediaType === "tv";
+  const base = isShow ? "/shows" : "/movies";
+  const noun = isShow ? "show" : "movie";
   const navigate = useNavigate();
   const genres = useGenres(),
     categories = useCategories(),
     people = usePeople();
-  const [defaults] = useState(() => initialMovieValues(movie, draft));
+  const [defaults] = useState(() =>
+    initialMovieValues(movie, draft, mediaType),
+  );
   const saved = useRef(false);
   const saving = useRef(false);
   const [duplicates, setDuplicates] = useState<DuplicateTitleError | null>(
@@ -115,8 +123,14 @@ export function MovieForm({
           (draft.metadata.releaseYear ?? null) &&
         (values.metadata.tmdbId ?? null) === (draft.metadata.tmdbId ?? null) &&
         (values.metadata.imdbId ?? null) === (draft.metadata.imdbId ?? null);
-      const result = await catalog.movies.saveMovie(
-        input,
+      const saveTitle = isShow
+        ? catalog.shows.saveShow.bind(catalog.shows)
+        : catalog.movies.saveMovie.bind(catalog.movies);
+      const result = await saveTitle(
+        {
+          ...input,
+          ...(isShow && !movie ? { seasons: draft?.tv?.seasons } : {}),
+        },
         movie
           ? {
               titleId: movie.title.id,
@@ -129,8 +143,12 @@ export function MovieForm({
       saved.current = true;
       reset(values);
       if (draft) clearTitleDraft();
-      toast.success(movie ? "Movie updated" : "Movie added to your collection");
-      navigate(`/movies/${result.title.id}`, { replace: true });
+      toast.success(
+        movie
+          ? `${isShow ? "Show" : "Movie"} updated`
+          : `${isShow ? "Show" : "Movie"} added to your collection`,
+      );
+      navigate(`${base}/${result.title.id}`, { replace: true });
     } catch (error) {
       if (error instanceof DuplicateTitleError) setDuplicates(error);
       else
@@ -143,7 +161,7 @@ export function MovieForm({
               "RecordNotFoundError",
             ].includes(error.name)
             ? error.message
-            : "The movie could not be saved. Your entered values are still here. Check browser storage and try again.",
+            : `The ${noun} could not be saved. Your entered values are still here. Check browser storage and try again.`,
         );
     } finally {
       saving.current = false;
@@ -155,19 +173,25 @@ export function MovieForm({
         eyebrow={
           movie ? "A STORY, REVISITED" : "A NEW CHAPTER IN YOUR COLLECTION"
         }
-        title={movie ? "Refine your record." : "Make room for a great film."}
+        title={
+          movie
+            ? "Refine your record."
+            : isShow
+              ? "A story with more chapters."
+              : "Make room for a great film."
+        }
         description={
           movie
-            ? "Your movie, your perspective. Every detail stays in your control."
+            ? `Your ${noun}, your perspective. Every detail stays in your control.`
             : "Just a title, genre, and status to begin. The rest is yours to add."
         }
         action={
           <Link
             className="secondary-button"
-            to={movie ? `/movies/${movie.title.id}` : "/movies"}
+            to={movie ? `${base}/${movie.title.id}` : base}
           >
             <ArrowLeft size={14} />
-            {movie ? "Back to movie" : "Back to movies"}
+            {movie ? `Back to ${noun}` : `Back to ${noun}s`}
           </Link>
         }
       />
@@ -183,10 +207,10 @@ export function MovieForm({
             <div className="movie-section-heading">
               <span>01</span>
               <div>
-                <h2>The movie</h2>
+                <h2>{isShow ? "The show" : "The movie"}</h2>
                 <p>Official details, with room for your own corrections.</p>
               </div>
-              <span className="outline-pill">MOVIE</span>
+              <span className="outline-pill">{isShow ? "TV" : "MOVIE"}</span>
             </div>
             <div className="movie-basics">
               <div className="form-poster">
@@ -205,7 +229,8 @@ export function MovieForm({
               </div>
               <div className="movie-basic-fields">
                 <label>
-                  Movie title <span className="required-note">Required</span>
+                  {isShow ? "Show title" : "Movie title"}{" "}
+                  <span className="required-note">Required</span>
                   <input
                     autoFocus
                     {...register("metadata.title")}
@@ -237,7 +262,7 @@ export function MovieForm({
                     )}
                   </label>
                   <label>
-                    Runtime · minutes
+                    {isShow ? "Typical episode · minutes" : "Runtime · minutes"}
                     <input
                       type="number"
                       min="1"
@@ -255,10 +280,20 @@ export function MovieForm({
                 </div>
                 <p className="preference-note">
                   Title, at least one genre, and a watch status are required. A
-                  personal rating is required for Watched.
+                  personal rating is required for{" "}
+                  {isShow ? "Completed" : "Watched"}.
                 </p>
               </div>
             </div>
+            {isShow && (
+              <label>
+                Show type
+                <select {...register("metadata.mediaSubtype")}>
+                  <option value="tv_series">TV Series</option>
+                  <option value="tv_miniseries">TV Mini Series</option>
+                </select>
+              </label>
+            )}
             <Controller
               control={control}
               name="genreNames"
@@ -284,6 +319,7 @@ export function MovieForm({
               name="directors"
               render={({ field }) => (
                 <DirectorInput
+                  label={isShow ? "Creators / Directors" : "Directors"}
                   options={people.data ?? []}
                   value={field.value}
                   onChange={field.onChange}
@@ -298,7 +334,7 @@ export function MovieForm({
             )}
             <details className="movie-more-details">
               <summary>
-                More movie information{" "}
+                More {noun} information{" "}
                 <span>Release, language, artwork & external IDs</span>
               </summary>
               <div className="metadata-form-grid">
@@ -311,7 +347,7 @@ export function MovieForm({
                   />
                 </label>
                 <label>
-                  Release date
+                  {isShow ? "First air date" : "Release date"}
                   <input
                     type="date"
                     {...register("metadata.releaseDate", {
@@ -406,6 +442,55 @@ export function MovieForm({
                 </label>
               </div>
             </details>
+            {isShow && (
+              <div className="tv-show-metadata movie-two-fields">
+                <label>
+                  Last air date
+                  <input
+                    type="date"
+                    {...register("show.lastAirDate", { setValueAs: nullable })}
+                  />
+                  {errors.show?.lastAirDate && (
+                    <small role="alert" className="movie-field-error">
+                      {errors.show.lastAirDate.message}
+                    </small>
+                  )}
+                </label>
+                <label>
+                  Total seasons
+                  <input
+                    type="number"
+                    min="0"
+                    {...register("show.totalSeasons", { setValueAs: numeric })}
+                  />
+                  {errors.show?.totalSeasons && (
+                    <small role="alert" className="movie-field-error">
+                      {errors.show.totalSeasons.message}
+                    </small>
+                  )}
+                </label>
+                <label>
+                  Total regular episodes
+                  <input
+                    type="number"
+                    min="0"
+                    {...register("show.totalEpisodes", { setValueAs: numeric })}
+                  />
+                  {errors.show?.totalEpisodes && (
+                    <small role="alert" className="movie-field-error">
+                      {errors.show.totalEpisodes.message}
+                    </small>
+                  )}
+                </label>
+                <p className="preference-note">
+                  Seasons and episode details are optional. You can add them
+                  after saving.{" "}
+                  {draft?.tv?.seasons.length
+                    ? `${draft.tv.seasons.length} season summaries will be saved.`
+                    : ""}
+                </p>
+              </div>
+            )}
           </section>
         </div>
         <div className="movie-form-personal">
@@ -422,16 +507,16 @@ export function MovieForm({
               <select {...register("library.status")}>
                 {MOVIE_STATUSES.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {isShow && option.value === "completed"
+                      ? "Completed"
+                      : option.label}
                   </option>
                 ))}
                 {movie?.entry.status === "unknown" && (
                   <option value="unknown">Unknown · historical record</option>
                 )}
-                {movie?.entry.status === "caught_up" && (
-                  <option value="caught_up">
-                    Caught up · existing legacy status
-                  </option>
+                {(isShow || movie?.entry.status === "caught_up") && (
+                  <option value="caught_up">Caught Up</option>
                 )}
               </select>
               {errors.library?.status && (
@@ -480,17 +565,50 @@ export function MovieForm({
                 </label>
               )}
             />
-            <Controller
-              control={control}
-              name="watchedDate"
-              render={({ field }) => (
-                <DateWatchedInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={errors.watchedDate?.value?.message}
+            {isShow ? (
+              <>
+                <Controller
+                  control={control}
+                  name="library.startedAt"
+                  render={({ field }) => (
+                    <DateWatchedInput
+                      value={
+                        field.value ?? { precision: "unknown", value: null }
+                      }
+                      onChange={field.onChange}
+                      label="Date started"
+                      error={errors.library?.startedAt?.value?.message}
+                    />
+                  )}
                 />
-              )}
-            />
+                <Controller
+                  control={control}
+                  name="library.completedAt"
+                  render={({ field }) => (
+                    <DateWatchedInput
+                      value={
+                        field.value ?? { precision: "unknown", value: null }
+                      }
+                      onChange={field.onChange}
+                      label="Date completed"
+                      error={errors.library?.completedAt?.value?.message}
+                    />
+                  )}
+                />
+              </>
+            ) : (
+              <Controller
+                control={control}
+                name="watchedDate"
+                render={({ field }) => (
+                  <DateWatchedInput
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.watchedDate?.value?.message}
+                  />
+                )}
+              />
+            )}
             <Controller
               control={control}
               name="categoryNames"
@@ -543,17 +661,17 @@ export function MovieForm({
           </p>
           <Link
             className="secondary-button"
-            to={movie ? `/movies/${movie.title.id}` : "/movies"}
+            to={movie ? `${base}/${movie.title.id}` : base}
           >
             Cancel
           </Link>
           <button className="button" type="submit" disabled={isSubmitting}>
             <Save size={15} />
             {isSubmitting
-              ? "Saving your movie…"
+              ? `Saving your ${noun}…`
               : movie
                 ? "Save changes"
-                : "Save movie"}
+                : `Save ${noun}`}
           </button>
         </div>
       </form>

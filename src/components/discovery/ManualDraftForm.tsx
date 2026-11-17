@@ -86,6 +86,7 @@ export function ManualDraftForm({
         source: initial?.source === "tmdb" && sameType ? "tmdb" : "manual",
         preparedAt: new Date().toISOString(),
         confirmedPossibleDuplicate: false,
+        ...(sameType && type === "tv" && initial?.tv ? { tv: initial.tv } : {}),
       });
     } catch (error) {
       setError(

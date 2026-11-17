@@ -1,6 +1,16 @@
-# Kinoquill local data architecture — Phase 2
+# Kinoquill local data architecture — Phases 2–5
 
-All personal data lives in the browser's IndexedDB. `kinoquill_local` retains its original name. The database declares both version 1 (settings and local metadata) and version 2 (domain stores); no store is cleared, recreated, or reset during initialization. Only the genre reference catalog is seeded. A transactional `genre-catalog-v1` metadata marker makes seeding idempotent and prevents explicitly deleted catalog genres from being resurrected on reload. No movie, show, viewing session, or personal record is automatically generated.
+All personal data lives in the browser's IndexedDB. `kinoquill_local` retains its original name. The database retains versions 1 (settings/local metadata), 2 (domain stores), and 3 (additive TV metadata/tracking stores). No store is cleared, recreated, or reset during initialization. Only the genre reference catalog is seeded. A transactional `genre-catalog-v1` metadata marker makes seeding idempotent and prevents explicitly deleted catalog genres from being resurrected on reload. No movie, show, viewing session, or personal record is automatically generated.
+
+## Phase 5 additions
+
+Schema v3 adds `showMetadata`, keyed by `titleId`, for last air date, optional total regular episode/season counts, and the explicit `includeSpecials` preference. First air date reuses the title's `releaseDate`; runtime is typical episode runtime. TV subtypes remain `tv_series`/`tv_miniseries`. Optional fields need no backfill: missing show metadata reads as unknown totals/dates and Specials excluded. A v2→v3 fixture verifies existing movies, settings, associations, and episode progress survive unchanged.
+
+`seasonTracking` uses `[libraryEntryId+seasonId]`, indexed by both foreign keys, and stores optional independent `personalRating`, `mode` (`exact`/`approximate`), `approximateWatched`, and `updatedAt`. Missing tracking rows mean exact mode and no season rating. Approximate mode contributes its count **instead of** exact episode progress. Individual records remain intact and cannot be edited until the user explicitly switches to exact mode. Switching modes never creates guessed episode IDs. All related mutations are transactional; archiving preserves both new stores.
+
+`TitleRecordService` shares Phase 4 title/library/association orchestration between the compatible `MovieService` facade and `ShowService`. TV dates are personal library fields and do not fabricate episode viewing sessions. Show edits check title/library revisions and preserve season and episode data. Creator selections use the `creator` person role; preexisting other person roles are retained. New TMDB seasons are saved only during explicit show creation. Requested-season episode loading fetches before the transaction, adds only missing episode numbers, and leaves existing names, corrections, ratings, and watched states intact.
+
+`utils/tvProgress.ts` is the shared calculation engine; the original `utils/progress.ts` API delegates to it. It deduplicates episode IDs, excludes season zero unless selected, uses one tracking mode per season, returns null for unknown/zero denominators, and accounts for known show totals when season breakdowns are missing. Percentages describe **all known episodes**, including future episodes; future air-date counts are labeled. Next-episode claims require a complete exact catalog and a known released date for the first unwatched episode. Unknown or approximate history uses “Continue tracking.” Completion percentages never write a personal watch status.
 
 ## Stores and identities
 

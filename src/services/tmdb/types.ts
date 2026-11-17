@@ -23,6 +23,10 @@ export interface TitleDraft {
   source: "manual" | "tmdb";
   preparedAt: string;
   confirmedPossibleDuplicate: boolean;
+  tv?: Pick<
+    DiscoveryMetadata,
+    "lastAirDate" | "seasonCount" | "episodeCount" | "seasons"
+  >;
 }
 export interface DiscoveryMetadata {
   metadata: TitleInput;

@@ -117,6 +117,22 @@ export interface EpisodeProgress {
   watchedAt: DateValue;
   updatedAt: string;
 }
+export interface ShowMetadata {
+  titleId: string;
+  lastAirDate: string | null;
+  totalSeasons: number | null;
+  totalEpisodes: number | null;
+  includeSpecials: boolean;
+}
+/** One mode per season. Approximate counts replace, never add to, exact progress. */
+export interface SeasonTracking {
+  seasonId: string;
+  libraryEntryId: string;
+  mode: "exact" | "approximate";
+  approximateWatched: number;
+  personalRating: number | null;
+  updatedAt: string;
+}
 export interface DuplicateMatch {
   strength: "strong" | "possible";
   reason: string;

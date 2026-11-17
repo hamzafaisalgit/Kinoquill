@@ -7,11 +7,16 @@ import { catalog } from "../../services/catalog";
 import { PosterArtwork } from "../discovery/PosterArtwork";
 import { movieStatus } from "../../utils/movieStatus";
 export function MovieCard({ item }: { item: LibraryItem }) {
+  const isShow = item.title.mediaType === "tv";
+  const base = isShow ? "/shows" : "/movies";
   const [busy, setBusy] = useState(false);
   async function favorite() {
     setBusy(true);
     try {
-      await catalog.movies.setFavorite(item.title.id, !item.entry.isFavorite);
+      await (isShow ? catalog.shows : catalog.movies).setFavorite(
+        item.title.id,
+        !item.entry.isFavorite,
+      );
     } catch {
       toast.error("Favorite could not be updated. Please try again.");
     } finally {
@@ -21,7 +26,7 @@ export function MovieCard({ item }: { item: LibraryItem }) {
   return (
     <article className="movie-card">
       <Link
-        to={`/movies/${item.title.id}`}
+        to={`${base}/${item.title.id}`}
         className="movie-card-art"
         aria-label={`Open ${item.title.title}`}
       >
@@ -31,7 +36,9 @@ export function MovieCard({ item }: { item: LibraryItem }) {
           allowExternal
         />
         <span className={`movie-status-badge status-${item.entry.status}`}>
-          {movieStatus(item.entry.status)}
+          {isShow && item.entry.status === "completed"
+            ? "Completed"
+            : movieStatus(item.entry.status)}
         </span>
       </Link>
       <button
@@ -47,7 +54,7 @@ export function MovieCard({ item }: { item: LibraryItem }) {
         />
       </button>
       <div className="movie-card-info">
-        <Link to={`/movies/${item.title.id}`}>
+        <Link to={`${base}/${item.title.id}`}>
           <h2>{item.title.title}</h2>
         </Link>
         <div>
