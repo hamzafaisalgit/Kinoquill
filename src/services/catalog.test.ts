@@ -76,8 +76,8 @@ describe("schema and migration integrity", () => {
       await db.genres.where("normalizedName").equals("action").count(),
     ).toBe(0);
   });
-  it("defines all Phase 2 stores without future-phase list/import stores", () => {
-    expect(db.verno).toBe(4);
+  it("retains existing stores with additive personal journal stores", () => {
+    expect(db.verno).toBe(5);
     expect(db.tables.map((table) => table.name).sort()).toEqual(
       [
         "appSettings",
@@ -98,6 +98,11 @@ describe("schema and migration integrity", () => {
         "seasonTracking",
         "importBatches",
         "importRecords",
+        "customLists",
+        "listItems",
+        "savedViews",
+        "tags",
+        "titleTags",
       ].sort(),
     );
   });

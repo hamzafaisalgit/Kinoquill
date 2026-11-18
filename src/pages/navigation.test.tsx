@@ -6,8 +6,11 @@ import { Dashboard } from "./Dashboard";
 import MoviesPage, { MovieCollection } from "./MoviesPage";
 import ShowsPage from "./ShowsPage";
 import LibraryPage from "./LibraryPage";
-import { CollectionPage, SettingsPage, NotFoundPage } from "./Pages";
+import { CollectionPage, NotFoundPage } from "./Pages";
 import ImportExportPage from "./ImportExportPage";
+import SettingsPage from "./SettingsPage";
+import DiaryPage from "./DiaryPage";
+import ListsPage from "./ListsPage";
 import AnalyticsPage from "./AnalyticsPage";
 
 describe("frontend-only navigation", () => {
@@ -28,6 +31,8 @@ describe("frontend-only navigation", () => {
         <CollectionPage route={route} />
       ),
     ),
+    <DiaryPage />,
+    <ListsPage />,
     <AnalyticsPage />,
     <ImportExportPage />,
     <SettingsPage />,

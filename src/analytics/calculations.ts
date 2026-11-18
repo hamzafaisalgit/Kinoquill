@@ -66,7 +66,8 @@ export function prepareAnalytics(s: AnalyticsSnapshot, today: string) {
   const television = new Map<string, ReturnType<typeof tvProgress>>();
   for (const item of items) {
     const { title: t, entry: e } = item;
-    const visits = sessions.get(e.id) ?? [];
+    const allVisits = sessions.get(e.id) ?? [];
+    const visits = allVisits.filter((v) => !v.episodeId);
     const first = visits.filter((v) => v.sessionType === "first_watch");
     // A completion date is a fallback event, never an extra first viewing.
     if (!first.length && e.status === "completed")
@@ -96,12 +97,7 @@ export function prepareAnalytics(s: AnalyticsSnapshot, today: string) {
             : "show"
           : "session",
         rewatch: v.sessionType === "rewatch",
-        date:
-          v.viewedDate.precision === "unknown" &&
-          v.sessionType === "first_watch" &&
-          first.length === 1
-            ? e.completedAt
-            : v.viewedDate,
+        date: v.viewedDate,
         recorded: v.durationMinutes,
         estimated:
           v.durationMinutes === null && t.mediaType === "movie"
@@ -132,6 +128,36 @@ export function prepareAnalytics(s: AnalyticsSnapshot, today: string) {
       today,
     );
     television.set(t.id, result);
+    const episodeById = new Map(showEpisodes.map((ep) => [ep.id, ep]));
+    const includedSeasons = new Set(result.seasons.map((r) => r.season.id));
+    const episodeVisits = allVisits.filter(
+      (v) =>
+        v.episodeId &&
+        episodeById.has(v.episodeId) &&
+        includedSeasons.has(episodeById.get(v.episodeId)!.seasonId) &&
+        !futureIds.has(v.episodeId),
+    );
+    const episodeFirstIds = new Set(
+      episodeVisits
+        .filter((v) => v.sessionType === "first_watch")
+        .map((v) => v.episodeId!),
+    );
+    for (const v of episodeVisits) {
+      const episode = episodeById.get(v.episodeId!)!;
+      const rewatch = v.sessionType === "rewatch";
+      events.push({
+        id: v.id,
+        titleId: t.id,
+        kind: "episode",
+        rewatch,
+        date: v.viewedDate,
+        recorded: aggregateTvDuration && !rewatch ? null : v.durationMinutes,
+        estimated:
+          v.durationMinutes !== null || (aggregateTvDuration && !rewatch)
+            ? null
+            : (episode.runtimeMinutes ?? t.runtimeMinutes),
+      });
+    }
     const watched = new Map(
       showProgress.filter((p) => p.watched).map((p) => [p.episodeId, p]),
     );
@@ -148,13 +174,22 @@ export function prepareAnalytics(s: AnalyticsSnapshot, today: string) {
             estimated:
               t.runtimeMinutes === null
                 ? null
-                : season.watched * t.runtimeMinutes,
+                : Math.max(
+                    0,
+                    season.watched -
+                      season.rows.filter((ep) => episodeFirstIds.has(ep.id))
+                        .length,
+                  ) * t.runtimeMinutes,
           });
         continue;
       }
       for (const episode of season.rows) {
         const p = watched.get(episode.id);
-        if (!p || (episode.airDate !== null && episode.airDate > today))
+        if (
+          !p ||
+          episodeFirstIds.has(episode.id) ||
+          (episode.airDate !== null && episode.airDate > today)
+        )
           continue;
         events.push({
           id: p.id,

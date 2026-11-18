@@ -1,6 +1,26 @@
-# Kinoquill local data architecture — Phases 2–7
+# Kinoquill local data architecture — Phases 2–9
 
-All personal data lives in the browser's IndexedDB. `kinoquill_local` retains its original name. The database retains versions 1 (settings/local metadata), 2 (domain stores), 3 (TV metadata/tracking), and 4 (import batches/provenance). No store is cleared, recreated, or reset during initialization. Only the genre reference catalog is seeded. A transactional `genre-catalog-v1` metadata marker makes seeding idempotent and prevents explicitly deleted catalog genres from being resurrected on reload. No movie, show, viewing session, or personal record is automatically generated.
+All personal data lives in the browser's IndexedDB. `kinoquill_local` retains its original name. The database retains versions 1 (settings/local metadata), 2 (domain stores), 3 (TV metadata/tracking), 4 (import batches/provenance), and 5 (personal diary/lists/views/tags). No store is cleared, recreated, or reset during initialization. Only the genre reference catalog is seeded. A transactional `genre-catalog-v1` metadata marker makes seeding idempotent and prevents explicitly deleted catalog genres from being resurrected on reload. No movie, show, viewing session, or personal record is automatically generated.
+
+## Phase 9 additions
+
+Schema **v5** preserves existing stores and rows, adds five stores, and indexes viewing sessions by entry, episode and date value. `customLists` holds names/descriptions/timestamps; `listItems` holds stable IDs, title IDs and persistent positions, with a unique list/title index. `savedViews` stores only a validated route/filter/display configuration. `tags` has normalized-name uniqueness; `titleTags` links titles to descriptive tags separately from structured library categories. Existing domain transaction scope includes these stores, so nested personal operations remain atomic. No default personal records are seeded.
+
+`ViewingSession` adds optional episode ID, session rating, platform and context. Legacy rows can omit these fields. Existing viewing services validate episode/show ownership, guard duplicate first watches and stable submission IDs, and optionally call the existing exact progress service within the same transaction. Update/delete never alter overall rating or erase progress. Import watched-date updates and title first-watch lookup explicitly exclude episode sessions. Diary joins title/entry references centrally, filters locally, paginates 24 sessions, and hydrates only the current page's episode/season definitions. Global first/latest known dates are calculated before pagination.
+
+`appSettings.journal` holds validated presentation/tracking preferences and optional backup reminder timestamps. Page size is 12/24/48; saved views retain the current size in URL configuration. Deleted tag links are removed without affecting genres/categories. Missing saved-filter references require acknowledgment before they are removed from the loaded URL; the saved original can be edited or deleted. Backup/clear refresh the shared preference snapshot after commit. Reminder dismissal and actual backup initiation use separate fields.
+
+`services/backup/validation.ts` defines format v1/schema 5, the explicit 22-store user-data allowlist, strict physical completeness checks, row schemas, primary/unique key checks and foreign-key/TV ownership validation. Unknown essential fields/stores and unsupported versions reject safely. Existing decimal ratings and optional legacy session fields remain valid. Dangling saved-view genre/category/tag references are intentionally permitted, since they have a recovery UI; actual record relationships must be intact.
+
+`BackupService.snapshot` uses one read transaction. Credentials, transient caches, original import file bytes and internal `localMetadata` are not part of the format. Restore clones/revalidates the selected plan before a single read-write transaction clears/replaces all allowlisted stores. Store counts and primary-key identities are verified before commit. A late error, including quota failure, rolls back earlier clears/writes. Data-management transactions overlap all personal stores, serializing with ordinary domain/import writes. Destructive UI requires a backup offer/acknowledgment and literal REPLACE or DELETE. Merge is deliberately unavailable.
+
+The JSON reader/writer limit is 25 MB and validation caps total records at 200,000. Images remain remote URL references. A download request cannot prove that a file reached disk. Clear resets personal preferences and stores but preserves internal seed/check metadata, unrelated browser databases and in-memory credentials; the confirmation explicitly explains this. A new empty database still initializes its reference genre catalog normally.
+
+Seven focused Phase 9 tests cover movie sessions, episode progress and analytics deduplication, ordered lists, live saved/tag filters, all-store JSON round-trip, invalid/future data and actual late transaction failure, and a real v4→v5 upgrade with untouched legacy sessions. The existing import and TV migration fixtures continue to represent their original store sets.
+
+## Phase 8 calculations
+
+Analytics use a shared reactive snapshot and pure calculations, documented in [analytics-definitions.md](analytics-definitions.md). Phase 9 adds episode sessions without duplicating first-watch progress events, retains session versus overall ratings, and keeps explicit unknown viewing dates unknown. A runtime-derived duration remains an estimate; repeat episodes do not inflate unique episode progress or show-completion counts.
 
 ## Phase 7 additions
 

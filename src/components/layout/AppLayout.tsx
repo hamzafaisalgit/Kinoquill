@@ -1,3 +1,5 @@
+import { journalPreferences } from "../../services/preferences";
+import "../../styles/personal.css";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
@@ -210,7 +212,9 @@ export function AppLayout() {
     }
   }, [pathname]);
   return (
-    <div className={`app-layout ${collapsed ? "is-collapsed" : ""}`}>
+    <div
+      className={`app-layout ${collapsed ? "is-collapsed" : ""} ${journalPreferences(storage.settings.journal).reducedMotion ? "prefers-reduced-motion" : ""}`}
+    >
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>

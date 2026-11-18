@@ -124,7 +124,10 @@ export class TitleRecordService {
       const sessions = await this.db.viewingSessions
         .where("libraryEntryId")
         .equals(entry.id)
-        .filter((session) => session.sessionType === "first_watch")
+        .filter(
+          (session) =>
+            session.sessionType === "first_watch" && !session.episodeId,
+        )
         .sortBy("createdAt");
       return {
         title,

@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS } from "../types/storage";
 import type { AppSettings, StorageSnapshot } from "../types/storage";
 import { seedGenres } from "../db/seed";
 import { libraryPreferences } from "../utils/libraryState";
+import { journalSchema } from "./preferences";
 
 export function describeStorageError(error: unknown): string {
   const name = error instanceof Error ? error.name : "";
@@ -124,7 +125,9 @@ export class LocalDatabaseService {
   }
 
   updateSettings = async (
-    patch: Partial<Pick<AppSettings, "sidebarCollapsed" | "library">>,
+    patch: Partial<
+      Pick<AppSettings, "sidebarCollapsed" | "library" | "journal">
+    >,
   ): Promise<void> => {
     if (this.snapshot.phase !== "ready" || this.snapshot.saving) return;
     this.publish({ saving: true });
@@ -141,6 +144,9 @@ export class LocalDatabaseService {
           const settings = {
             ...(await this.readSettings()),
             ...patch,
+            ...(patch.journal
+              ? { journal: journalSchema.parse(patch.journal) }
+              : {}),
             ...(patch.library
               ? { library: libraryPreferences(patch.library) }
               : {}),
@@ -162,6 +168,9 @@ export class LocalDatabaseService {
 
   getVersionInfo() {
     return { name: this.database.name, version: this.database.verno };
+  }
+  async refreshSettings() {
+    this.publish({ settings: await this.readSettings() });
   }
 }
 

@@ -2,6 +2,13 @@ import Dexie, { type Table } from "dexie";
 import type { AppSettings, LocalMetadata } from "../types/storage";
 import type { ImportBatch, ImportRecord } from "../types/imports";
 import type {
+  CustomList,
+  ListItem,
+  SavedView,
+  Tag,
+  TitleTag,
+} from "../types/personal";
+import type {
   Title,
   Genre,
   Person,
@@ -19,7 +26,7 @@ import type {
 } from "../types/domain";
 
 export const DATABASE_NAME = "kinoquill_local";
-export const DATABASE_VERSION = 4;
+export const DATABASE_VERSION = 5;
 
 export class KinoquillDatabase extends Dexie {
   appSettings!: Table<AppSettings, string>;
@@ -40,6 +47,11 @@ export class KinoquillDatabase extends Dexie {
   seasonTracking!: Table<SeasonTracking, [string, string]>;
   importBatches!: Table<ImportBatch, string>;
   importRecords!: Table<ImportRecord, string>;
+  customLists!: Table<CustomList, string>;
+  listItems!: Table<ListItem, string>;
+  savedViews!: Table<SavedView, string>;
+  tags!: Table<Tag, string>;
+  titleTags!: Table<TitleTag, [string, string]>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -73,6 +85,15 @@ export class KinoquillDatabase extends Dexie {
     this.version(4).stores({
       importBatches: "&id,importedAt",
       importRecords: "&id,batchId,entryId,titleId",
+    });
+    // Additive: old sessions omit optional diary fields; no historical events are invented.
+    this.version(5).stores({
+      viewingSessions: "&id,libraryEntryId,episodeId,viewedDate.value",
+      customLists: "&id,name",
+      listItems: "&id,listId,titleId,&[listId+titleId],[listId+position]",
+      savedViews: "&id,name",
+      tags: "&id,&normalizedName",
+      titleTags: "[titleId+tagId],titleId,tagId",
     });
   }
 }

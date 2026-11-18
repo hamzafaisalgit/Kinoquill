@@ -1,3 +1,6 @@
+import { ViewingHistory } from "../components/personal/ViewingHistory";
+import { AddToListButton } from "../components/personal/Lists";
+import { PersonalTags } from "../components/personal/Tags";
 import { useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { libraryReturn } from "../utils/libraryState";
@@ -382,7 +385,19 @@ export default function ShowDetailsPage() {
           )}
         </section>
       </div>
-      {!archived && <SeasonManager record={record} />}
+      {!archived && (
+        <>
+          <div className="personal-inline-actions">
+            <AddToListButton titleIds={[title.id]} />
+          </div>
+          <ViewingHistory
+            entryId={entry.id}
+            completed={entry.status === "completed"}
+          />
+          <PersonalTags titleId={title.id} />
+          <SeasonManager record={record} />
+        </>
+      )}
       <section className="panel movie-written-record personal-review-section">
         <p className="eyebrow">A FEW WORDS THAT ARE YOURS</p>
         <h2>My review</h2>

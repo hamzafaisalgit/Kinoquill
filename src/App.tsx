@@ -21,8 +21,11 @@ const CollectionPage = lazy(() =>
 );
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const ImportExportPage = lazy(() => import("./pages/ImportExportPage"));
-const SettingsPage = lazy(() =>
-  import("./pages/Pages").then((module) => ({ default: module.SettingsPage })),
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const DiaryPage = lazy(() => import("./pages/DiaryPage"));
+const ListsPage = lazy(() => import("./pages/ListsPage"));
+const ListDetailsPage = lazy(() =>
+  import("./pages/ListsPage").then((m) => ({ default: m.ListDetailsPage })),
 );
 const NotFoundPage = lazy(() =>
   import("./pages/Pages").then((module) => ({ default: module.NotFoundPage })),
@@ -126,6 +129,9 @@ const router = createBrowserRouter(
           </Suspense>
         }
       />
+      <Route path="diary" element={<DiaryPage />} />
+      <Route path="lists" element={<ListsPage />} />
+      <Route path="lists/:id" element={<ListDetailsPage />} />
       <Route path="analytics" element={<AnalyticsPage />} />
       <Route path="import-export" element={<ImportExportPage />} />
       <Route path="settings" element={<SettingsPage />} />

@@ -80,6 +80,7 @@ export const STATUSES = statuses.map((value) => ({
           : value[0].toUpperCase() + value.slice(1),
 }));
 export const FILTER_KEYS = [
+  "tag",
   "importBatch",
   "q",
   "type",
@@ -149,6 +150,7 @@ export function parseLibraryParams(params: URLSearchParams): LibraryQuery {
     genreIds: [...new Set(params.getAll("genre"))].slice(0, 100),
     genreMatch: params.get("genreMatch") === "all" ? "all" : "any",
     categoryIds: [...new Set(params.getAll("category"))].slice(0, 100),
+    tagIds: [...new Set(params.getAll("tag"))].slice(0, 100),
     categoryMatch: params.get("categoryMatch") === "all" ? "all" : "any",
     minRating,
     maxRating,
@@ -163,7 +165,9 @@ export function parseLibraryParams(params: URLSearchParams): LibraryQuery {
       ? (sort as LibrarySort)
       : undefined,
     page: Math.floor(numeric("page", 1, 100000) ?? 1),
-    pageSize: 24,
+    pageSize: [12, 24, 48].includes(Number(params.get("size")))
+      ? Number(params.get("size"))
+      : 24,
   };
 }
 export function titleHref(item: { title: { id: string; mediaType: string } }) {

@@ -1,3 +1,7 @@
+import { SavedViewsBar } from "../personal/SavedViews";
+import { AddToListButton } from "../personal/Lists";
+import type { SavedView } from "../../types/personal";
+import { journalPreferences } from "../../services/preferences";
 import { useCallback, useEffect, useState } from "react";
 import {
   Link,
@@ -67,6 +71,7 @@ export function LibraryExplorer({
     storage = useLocalStorage(),
     genres = useGenres(),
     categories = useCategories(),
+    tags = useCatalogQuery(() => catalog.personal.tags(), []),
     summary = useLibrarySummary();
   const preferences = libraryPreferences(storage.settings.library);
   const [advanced, setAdvanced] = useState(false),
@@ -75,6 +80,9 @@ export function LibraryExplorer({
   const options = useCatalogQuery(() => catalog.library.getFilterOptions(), []);
   const query: LibraryQuery = {
     ...parseLibraryParams(params),
+    pageSize: params.has("size")
+      ? parseLibraryParams(params).pageSize
+      : journalPreferences(storage.settings.journal).pageSize,
     sort: parseLibraryParams(params).sort ?? preferences.sort,
     ...(scope === "movies"
       ? { mediaType: "movie", mediaSubtype: undefined }
@@ -101,12 +109,15 @@ export function LibraryExplorer({
         ? "grid"
         : preferences.view;
   const encoded = params.toString();
+  const savedParams = new URLSearchParams(params);
+  savedParams.set("size", String(query.pageSize));
   useEffect(() => {
-    if (!genres.data || !categories.data) return;
+    if (!genres.data || !categories.data || !tags.data) return;
     const next = new URLSearchParams(encoded);
     let changed = false;
     for (const [key, ids] of [
       ["genre", genres.data.map((row) => row.id)],
+      ["tag", tags.data.map((row) => row.id)],
       ["category", categories.data.map((row) => row.id)],
     ] as const) {
       const valid = next.getAll(key).filter((id) => ids.includes(id));
@@ -120,7 +131,7 @@ export function LibraryExplorer({
       next.delete("page");
       setParams(next, { replace: true });
     }
-  }, [encoded, genres.data, categories.data, setParams]);
+  }, [encoded, genres.data, categories.data, tags.data, setParams]);
   const update = useCallback(
     (key: string, value: string) =>
       setParams((previous) => {
@@ -157,25 +168,28 @@ export function LibraryExplorer({
       key,
       value,
       label:
-        key === "genre"
-          ? `Genre: ${genres.data?.find((row) => row.id === value)?.name ?? "Missing genre"}`
-          : key === "category"
-            ? `Category: ${categories.data?.find((row) => row.id === value)?.name ?? "Missing category"}`
-            : key === "q"
-              ? `Search: ${value}`
-              : key === "status"
-                ? (STATUSES.find((row) => row.value === value)?.label ?? value)
-                : key === "type"
-                  ? value === "movie"
-                    ? "Movies"
-                    : value === "tv"
-                      ? "TV shows"
-                      : "TV Mini Series"
-                  : key === "unrated"
-                    ? "Unrated only"
-                    : key === "favorite"
-                      ? "Favorites only"
-                      : `${key.replace(/([A-Z])/g, " $1")}: ${value}`,
+        key === "tag"
+          ? `Tag: ${tags.data?.find((t) => t.id === value)?.name ?? "Missing tag"}`
+          : key === "genre"
+            ? `Genre: ${genres.data?.find((row) => row.id === value)?.name ?? "Missing genre"}`
+            : key === "category"
+              ? `Category: ${categories.data?.find((row) => row.id === value)?.name ?? "Missing category"}`
+              : key === "q"
+                ? `Search: ${value}`
+                : key === "status"
+                  ? (STATUSES.find((row) => row.value === value)?.label ??
+                    value)
+                  : key === "type"
+                    ? value === "movie"
+                      ? "Movies"
+                      : value === "tv"
+                        ? "TV shows"
+                        : "TV Mini Series"
+                    : key === "unrated"
+                      ? "Unrated only"
+                      : key === "favorite"
+                        ? "Favorites only"
+                        : `${key.replace(/([A-Z])/g, " $1")}: ${value}`,
     }));
   const title =
     scope === "library"
@@ -236,6 +250,12 @@ export function LibraryExplorer({
         </Link>
         <Link to="/favorites">{summary.data?.favorites ?? "—"} favorites</Link>
       </div>
+      <SavedViewsBar
+        route={("/" + scope) as SavedView["route"]}
+        params={savedParams}
+        display={{ ...preferences, view, sort: query.sort! }}
+        onTag={(value) => update("tag", value)}
+      />
       {scope === "shows" && <ContinueWatching />}
       <section
         className="panel library-toolbar"
@@ -560,7 +580,8 @@ export function LibraryExplorer({
             Previous
           </button>
           <span>
-            Page {result.data.page} of {result.data.totalPages} · 24 per page
+            Page {result.data.page} of {result.data.totalPages} ·{" "}
+            {query.pageSize} per page
           </span>
           <button
             className="secondary-button"
@@ -725,6 +746,12 @@ function LibraryResults({
       {targets.length > 0 && (
         <div className="panel library-bulk-toolbar" aria-label="Bulk actions">
           <strong>{targets.length} selected · current page only</strong>
+          <AddToListButton
+            titleIds={data.items
+              .filter((i) => selected.has(i.entry.id))
+              .map((i) => i.title.id)}
+            label="Add selected to list"
+          />
           <div>
             {(
               [

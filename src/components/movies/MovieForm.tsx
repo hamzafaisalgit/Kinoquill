@@ -1,3 +1,5 @@
+import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { journalPreferences } from "../../services/preferences";
 import { useCallback, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import {
@@ -49,9 +51,13 @@ export function MovieForm({
   const genres = useGenres(),
     categories = useCategories(),
     people = usePeople();
-  const [defaults] = useState(() =>
-    initialMovieValues(movie, draft, mediaType),
-  );
+  const preferences = journalPreferences(useLocalStorage().settings.journal);
+  const [defaults] = useState(() => {
+    const values = initialMovieValues(movie, draft, mediaType);
+    if (!movie && isShow)
+      values.show.includeSpecials = preferences.includeSpecials;
+    return values;
+  });
   const saved = useRef(false);
   const saving = useRef(false);
   const [duplicates, setDuplicates] = useState<DuplicateTitleError | null>(

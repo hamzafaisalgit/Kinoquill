@@ -1,3 +1,6 @@
+import { AddToListButton } from "../personal/Lists";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { journalPreferences } from "../../services/preferences";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, Star } from "lucide-react";
@@ -13,6 +16,7 @@ export function MovieCard({
   item: LibraryItem;
   returnTo?: string;
 }) {
+  const preferences = journalPreferences(useLocalStorage().settings.journal);
   const isShow = item.title.mediaType === "tv";
   const base = isShow ? "/shows" : "/movies";
   const [busy, setBusy] = useState(false);
@@ -38,7 +42,7 @@ export function MovieCard({
         aria-label={`Open ${item.title.title}`}
       >
         <PosterArtwork
-          path={item.title.posterPath}
+          path={preferences.posters ? item.title.posterPath : null}
           title={item.title.title}
           allowExternal
         />
@@ -68,20 +72,24 @@ export function MovieCard({
           <h2>{item.title.title}</h2>
         </Link>
         <div>
-          <span>{item.title.releaseYear ?? "Year unknown"}</span>
-          {item.entry.personalRating !== null ? (
-            <span
-              className="movie-card-rating"
-              aria-label={`${item.entry.personalRating} out of 10 personal rating`}
-            >
-              <Star size={11} />
-              {item.entry.personalRating}
-            </span>
-          ) : (
-            <span>Unrated</span>
+          {preferences.showCardYear && (
+            <span>{item.title.releaseYear ?? "Year unknown"}</span>
           )}
+          {preferences.showCardRating &&
+            (item.entry.personalRating !== null ? (
+              <span
+                className="movie-card-rating"
+                aria-label={`${item.entry.personalRating} out of 10 personal rating`}
+              >
+                <Star size={11} />
+                {item.entry.personalRating}
+              </span>
+            ) : (
+              <span>Unrated</span>
+            ))}
         </div>
       </div>
+      <AddToListButton titleIds={[item.title.id]} />
     </article>
   );
 }

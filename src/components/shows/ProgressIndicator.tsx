@@ -1,5 +1,8 @@
+import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { journalPreferences } from "../../services/preferences";
 import type { TvProgress } from "../../utils/tvProgress";
 export function ProgressIndicator({ summary }: { summary: TvProgress }) {
+  const preferences = journalPreferences(useLocalStorage().settings.journal);
   return (
     <div className="tv-progress">
       <div>
@@ -14,13 +17,14 @@ export function ProgressIndicator({ summary }: { summary: TvProgress }) {
             : `${Math.round(summary.percentage)}%`}
         </span>
       </div>
-      {summary.percentage !== null && (
-        <progress
-          max={100}
-          value={summary.percentage}
-          aria-label="Overall recorded episode progress"
-        />
-      )}
+      {summary.percentage !== null &&
+        preferences.progressStyle !== "numbers" && (
+          <progress
+            max={100}
+            value={summary.percentage}
+            aria-label="Overall recorded episode progress"
+          />
+        )}
       <p>
         {summary.completedSeasons} completed seasons · {summary.partialSeasons}{" "}
         in progress

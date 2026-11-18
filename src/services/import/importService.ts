@@ -437,7 +437,11 @@ export class ImportService {
                   const first = await this.db.viewingSessions
                     .where("libraryEntryId")
                     .equals(entryId)
-                    .filter((session) => session.sessionType === "first_watch")
+                    .filter(
+                      (session) =>
+                        session.sessionType === "first_watch" &&
+                        !session.episodeId,
+                    )
                     .first();
                   if (first)
                     await viewing.updateViewingSession(first.id, {

@@ -1,3 +1,6 @@
+import { ViewingHistory } from "../components/personal/ViewingHistory";
+import { AddToListButton } from "../components/personal/Lists";
+import { PersonalTags } from "../components/personal/Tags";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { libraryReturn } from "../utils/libraryState";
@@ -217,6 +220,18 @@ export default function MovieDetailsPage() {
           </div>
         </div>
       </section>
+      {!archived && (
+        <>
+          <div className="personal-inline-actions">
+            <AddToListButton titleIds={[title.id]} />
+          </div>
+          <ViewingHistory
+            entryId={entry.id}
+            completed={entry.status === "completed"}
+          />
+          <PersonalTags titleId={title.id} />
+        </>
+      )}
       <div className="movie-details-columns">
         <section className="panel movie-written-record">
           <p className="eyebrow">THE STORY ON SCREEN</p>

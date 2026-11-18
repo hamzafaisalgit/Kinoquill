@@ -262,6 +262,10 @@ export const viewingCreateSchema = z
     viewedDate: uncertainDate,
     durationMinutes: z.number().finite().nonnegative().nullable().default(null),
     notes: nullableText,
+    episodeId: z.string().min(1).nullable().default(null),
+    sessionRating: rating.default(null),
+    platform: nullableText,
+    context: nullableText,
   })
   .strict();
 export const seasonCreateSchema = z

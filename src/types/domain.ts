@@ -92,6 +92,10 @@ export interface ViewingSession extends Timestamped {
   viewedDate: DateValue;
   durationMinutes: number | null;
   notes: string | null;
+  episodeId?: string | null;
+  sessionRating?: number | null;
+  platform?: string | null;
+  context?: string | null;
 }
 export interface Season extends Timestamped {
   id: string;
@@ -159,6 +163,7 @@ export type LibrarySort =
   | "runtime_desc"
   | "runtime_asc";
 export interface LibraryQuery {
+  tagIds?: string[];
   importBatchId?: string;
   search?: string;
   mediaType?: MediaType;

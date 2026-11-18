@@ -228,6 +228,11 @@ it("upgrades v2 additively while preserving movies, settings and existing TV pro
             "seasonTracking",
             "importBatches",
             "importRecords",
+            "customLists",
+            "listItems",
+            "savedViews",
+            "tags",
+            "titleTags",
           ].includes(table.name),
       )
       .map((table) => [

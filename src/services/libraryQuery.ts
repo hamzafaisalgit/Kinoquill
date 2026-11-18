@@ -43,6 +43,16 @@ export async function queryLibrary(
     "r",
     [...domainTables(db), ...(query.importBatchId ? [db.importRecords] : [])],
     async () => {
+      const requestedTags = (query.tagIds ?? []).filter(Boolean);
+      const validTags = new Set((await db.tags.toArray()).map((t) => t.id));
+      const tagIds = requestedTags.filter((id) => validTags.has(id));
+      const taggedTitles = tagIds.length
+        ? new Set(
+            (await db.titleTags.where("tagId").anyOf(tagIds).toArray()).map(
+              (t) => t.titleId,
+            ),
+          )
+        : null;
       const imported = query.importBatchId
         ? new Set(
             (
@@ -61,6 +71,7 @@ export async function queryLibrary(
         .filter(
           (entry) =>
             entry.deletedAt === null &&
+            (!taggedTitles || taggedTitles.has(entry.titleId)) &&
             (!imported || imported.has(entry.id)) &&
             (query.favorite === undefined ||
               entry.isFavorite === query.favorite) &&

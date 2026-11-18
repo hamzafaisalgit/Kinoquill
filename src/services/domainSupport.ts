@@ -23,6 +23,11 @@ export function domainTables(db: KinoquillDatabase) {
     db.episodeProgress,
     db.showMetadata,
     db.seasonTracking,
+    db.customLists,
+    db.listItems,
+    db.savedViews,
+    db.tags,
+    db.titleTags,
   ];
 }
 /** Short, serialized domain writes protect references even across browser tabs. */

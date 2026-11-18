@@ -8,6 +8,8 @@ import {
   ArrowLeftRight,
   Settings,
   Library,
+  NotebookPen,
+  ListOrdered,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -82,11 +84,14 @@ export const collectionRoutes: CollectionRoute[] = [
 export const navigation = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   ...collectionRoutes,
+  { path: "/diary", label: "Viewing Diary", icon: NotebookPen },
+  { path: "/lists", label: "My Lists", icon: ListOrdered },
   { path: "/analytics", label: "Analytics", icon: ChartNoAxesCombined },
   { path: "/import-export", label: "Import & Export", icon: ArrowLeftRight },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 export function pageLabel(path: string) {
+  if (path.startsWith("/lists/")) return "Private list";
   if (path === "/shows/new") return "Add TV show";
   if (path.startsWith("/shows/"))
     return path.endsWith("/edit") ? "Edit show" : "Show details";

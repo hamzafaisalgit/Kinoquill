@@ -1,8 +1,10 @@
 import type { LibraryPreferences } from "../utils/libraryState";
+import type { JournalPreferences } from "./personal";
 export interface AppSettings {
   id: "preferences";
   sidebarCollapsed: boolean;
   library?: LibraryPreferences;
+  journal?: JournalPreferences;
 }
 
 export interface LocalMetadata {

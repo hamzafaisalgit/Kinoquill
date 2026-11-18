@@ -1,3 +1,4 @@
+import { BackupReminder } from "../components/personal/BackupPanel";
 import {
   ArrowUpRight,
   Bookmark,
@@ -109,6 +110,7 @@ export function Dashboard() {
         title="Your cinema, curated."
         description="Every story you've watched. Every story you've kept."
       />
+      <BackupReminder />
       <section className="welcome-hero">
         <div className="hero-copy">
           <span className="pill">
@@ -344,7 +346,7 @@ export function Dashboard() {
             <h2>A journal, one story at a time.</h2>
             <p>
               Explore recorded viewing activity and personal insights in
-              Analytics. Diary editing arrives in Phase 9.
+              Analytics, or log another viewing in your Diary.
             </p>
           </div>
           <Link className="outline-pill" to="/analytics">

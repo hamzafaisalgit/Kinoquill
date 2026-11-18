@@ -1,3 +1,6 @@
+import { EpisodeDiaryButton } from "../personal/ViewingHistory";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { journalPreferences } from "../../services/preferences";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { useLocation } from "react-router-dom";
@@ -59,9 +62,10 @@ function SeasonAccordion({
   record: ShowTrackingRecord;
 }) {
   const location = useLocation();
+  const preferences = journalPreferences(useLocalStorage().settings.journal);
   const [expanded, setExpanded] = useState({
     hash: location.hash,
-    open: location.hash === `#season-${season.id}`,
+    open: preferences.expandSeasons || location.hash === `#season-${season.id}`,
   });
   const open =
     expanded.hash === location.hash
@@ -411,6 +415,7 @@ function EpisodeRow({
         </span>
       </label>
       <div className="tv-episode-personal">
+        <EpisodeDiaryButton entryId={entryId} episodeId={episode.id} />
         {progress?.watched && (
           <label>
             Watched date

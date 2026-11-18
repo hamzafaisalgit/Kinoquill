@@ -314,7 +314,16 @@ it("rolls back a late failure completely and upgrades a v3 database without chan
     schema = Object.fromEntries(
       db.tables
         .filter(
-          (table) => !["importBatches", "importRecords"].includes(table.name),
+          (table) =>
+            ![
+              "importBatches",
+              "importRecords",
+              "customLists",
+              "listItems",
+              "savedViews",
+              "tags",
+              "titleTags",
+            ].includes(table.name),
         )
         .map((table) => [
           table.name,
