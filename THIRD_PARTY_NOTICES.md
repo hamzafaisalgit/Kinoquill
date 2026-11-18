@@ -5,3 +5,8 @@
 - **@types/papaparse**, MIT: [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/papaparse). Development-only TypeScript declarations.
 
 Installed versions and transitive dependencies are pinned in `package-lock.json`; upstream license files remain in their packages. No spreadsheet-processing server or remote file API is used. The current dependency audit limitations are documented in README.md.
+
+# Phase 8 additions
+
+- [Recharts](https://github.com/recharts/recharts) · MIT · browser SVG charts.
+- [react-is](https://github.com/facebook/react/tree/main/packages/react-is) · MIT · React element compatibility used by Recharts.

@@ -1,16 +1,9 @@
 import {
   ArrowLeft,
   ArrowUpRight,
-  ChartNoAxesCombined,
-  Clock3,
-  Film,
-  Globe2,
-  Heart,
-  Layers3,
   Monitor,
   ShieldCheck,
   SlidersHorizontal,
-  Star,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -81,73 +74,6 @@ export function CollectionPage({ route }: { route: CollectionRoute }) {
   );
 }
 
-export function AnalyticsPage() {
-  const cards = [
-    {
-      icon: Film,
-      title: "Your viewing landscape",
-      text: "Movies, series, and the shape of your collection.",
-    },
-    {
-      icon: Star,
-      title: "A matter of taste",
-      text: "Personal ratings and your most-loved stories.",
-    },
-    {
-      icon: Layers3,
-      title: "Beyond the surface",
-      text: "Genres, directors, and decades of discovery.",
-    },
-    {
-      icon: Clock3,
-      title: "Time well spent",
-      text: "Viewing habits, watching hours, and rewatches.",
-    },
-    {
-      icon: Globe2,
-      title: "Cinema without borders",
-      text: "Explore the countries and languages you watch.",
-    },
-    {
-      icon: Heart,
-      title: "Your personal insights",
-      text: "Find the threads that connect your favorites.",
-    },
-  ];
-  return (
-    <>
-      <PageHeader
-        eyebrow="A NEW PERSPECTIVE"
-        title="The story behind your stories."
-        description="Discover what your collection says about your cinematic world."
-      />
-      <section className="analytics-intro panel">
-        <div className="empty-icon">
-          <ChartNoAxesCombined size={27} />
-        </div>
-        <div>
-          <span className="eyebrow">INSIGHTS, IN TIME</span>
-          <h2>A richer picture starts with your collection.</h2>
-          <p>
-            Analytics arrive in a later phase. No statistics are calculated or
-            displayed yet.
-          </p>
-        </div>
-      </section>
-      <section className="feature-grid">
-        {cards.map(({ icon: Icon, title, text }) => (
-          <article className="panel feature-card" key={title}>
-            <Icon size={23} strokeWidth={1.5} />
-            <span className="upcoming-label">UPCOMING</span>
-            <h2>{title}</h2>
-            <p>{text}</p>
-          </article>
-        ))}
-      </section>
-    </>
-  );
-}
-
 export function SettingsPage() {
   const storage = useLocalStorage();
   return (
@@ -174,7 +100,7 @@ export function SettingsPage() {
           </div>
           <div>
             <dt>Current edition</dt>
-            <dd>Phase 07 · Spreadsheet import & export</dd>
+            <dd>Phase 08 · Local analytics & insights</dd>
           </div>
           <div>
             <dt>Local database</dt>

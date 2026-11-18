@@ -6,13 +6,9 @@ import { Dashboard } from "./Dashboard";
 import MoviesPage, { MovieCollection } from "./MoviesPage";
 import ShowsPage from "./ShowsPage";
 import LibraryPage from "./LibraryPage";
-import {
-  AnalyticsPage,
-  CollectionPage,
-  SettingsPage,
-  NotFoundPage,
-} from "./Pages";
+import { CollectionPage, SettingsPage, NotFoundPage } from "./Pages";
 import ImportExportPage from "./ImportExportPage";
+import AnalyticsPage from "./AnalyticsPage";
 
 describe("frontend-only navigation", () => {
   const pages = [

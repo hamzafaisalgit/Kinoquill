@@ -25,6 +25,18 @@ npm.cmd run preview
 
 `test` runs Vitest once. `build` runs TypeScript before creating `dist/`. `preview` serves the production build locally. A production static host must route unknown application paths to `index.html` for React Router.
 
+## Phase 8 — local analytics and insights
+
+**Analytics** now provides live collection metrics, yearly/monthly viewing charts and daily activity, rating distributions and ranked titles, genres and trends, directors/creators, release years/decades, languages/countries, television progress, recorded versus estimated watch time, rewatches, year comparisons and deterministic personal insights. The home Dashboard reuses the same local calculation engine for its summaries, recently viewed titles, genre insight and activity preview.
+
+Filter by media, personal viewing period (all time/current/previous/custom year or range), release years, multiple genres/categories, personal rating/rating availability and status. Viewing filters use actual personal events; release dates, import Date Rated, and dates added never become watch dates. Partial dates must fit the selected range; unknown dates are excluded. With a date filter, title statistics describe qualifying titles while current TV progress and current ratings remain snapshots, not historical reconstructions.
+
+Null ratings stay unrated, zero and historical decimals are preserved, archived titles are excluded, and rewatches never inflate unique-title totals. Multi-genre/country counts overlap. Missing dates, runtimes, metadata and episode totals remain unknown. Genre/person rankings show sample sizes and require three ratings; highlighted genre insights require five. Recorded duration and runtime estimates are explicitly separated. Detailed definitions: [analytics-definitions.md](docs/analytics-definitions.md).
+
+Every Recharts card offers an accessible supporting table and **CSV data** download; populated charts also offer **PNG** download with title/context. Genre, release decade, status and title links reuse existing library filters/detail pages. Responsive tabs render only the selected section. All calculations, insights, PNG rendering and CSV generation run in the browser. Recharts and `react-is` are the only added dependencies; no server, analytics API, schema migration or sample user records are introduced. Heatmap PNG and historical rating snapshots are outside this implementation; diary editing and backups remain Phase 9.
+
+Verification: **145 tests** passed (six focused analytics tests), along with TypeScript, ESLint and the production build. An isolated Chrome profile verified empty/populated states, all analytics sections, reactive rating changes, media/personal-date filters, year comparison, genre links, Dashboard reuse, actual CSV/PNG downloads and 1440/768/390-pixel layouts. The existing lazy ExcelJS chunk size warning remains; dependency audit counts are unchanged.
+
 ## Phase 7 — local spreadsheet import and export
 
 **Import & Export** now reads UTF-8 **CSV** (including BOM, quoted commas/quotes/newlines) and **XLSX** entirely in the browser. Choose or drop a file, select sheets, review mappings/header rows, configure interpretation, inspect the preview and duplicates, then explicitly confirm. Back navigation preserves sheet/mapping choices; source values can be corrected and revalidated. Nothing creates personal records during parsing or preview.
@@ -45,7 +57,7 @@ Schema **v4** adds `importBatches` and `importRecords` without altering existing
 
 Verification: TypeScript, ESLint, production build, and **139 tests** passed, including eight focused spreadsheet checks for parsing/normalization, duplicates, approved updates, rollback, v3→v4 migration, formula-safe CSV/XLSX round-trips, typed dates, and mocked enrichment. A separate browser profile verified actual CSV upload, mappings/configuration, no writes before confirmation, import/Library visibility, a browser-generated XLSX download and reupload, multiple sheets, duplicate skips, and desktop/mobile preview layouts. **The actual 38-row `shows.csv` was not available**, including in preserved repository data; compatibility was checked against its documented schema. Live authenticated TMDB enrichment was not tested without a real token.
 
-Phases **1–7** are implemented. Start with `npm.cmd run dev` as above. Analytics remains Phase 8; advanced lists, rewatches, and full backup/restore remain later phases.
+Phases **1–8** are implemented. Start with `npm.cmd run dev` as above. Phase 9 can begin: diary editing, advanced lists and full backup/restore remain future work.
 
 ## Phase 6 — unified library and organization
 
@@ -61,7 +73,7 @@ Open **Library** (`/library`) for movies and shows together. Movies, TV Shows, W
 
 Main source: `src/components/library/`, `src/pages/LibraryPage.tsx`, the extended `LibraryService`/`CategoryService`, `src/services/libraryQuery.ts`, `src/utils/libraryState.ts`, and `src/styles/library.css`. Phase 6 adds seven focused checks. **131 selected regressions passed**, including existing movie/TV/storage/navigation/TMDB checks and the existing 5,000-title pagination fixture. Browser smoke checks used a separate profile at 1440/1024/768/390 pixels for views, local search, filtering, sorting, quick edits, categories, bulk validation, persistence, and contained table scrolling; no TMDB API requests or runtime exceptions occurred.
 
-Phases **1–6** are implemented. Excel/CSV import/export, full analytics, custom lists, and named saved views remain for later phases. Live authenticated TMDB access still requires the user's own valid token. Start with `npm.cmd run dev` as above.
+This section records the Phase 6 delivery; spreadsheet tools and analytics were subsequently implemented in Phases 7–8. Custom lists and named saved views remain future work. Live authenticated TMDB access requires the user's own valid token.
 
 ## Phase 5 — TV shows and progress
 

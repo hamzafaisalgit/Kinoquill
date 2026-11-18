@@ -11,11 +11,16 @@ import {
   Star,
   Clock3,
 } from "lucide-react";
+import { useMemo } from "react";
+import { useAnalyticsData } from "../analytics/data";
+import { calculateAnalytics, displayNumber } from "../analytics/calculations";
+import { localToday } from "../utils/dates";
+import "../styles/analytics.css";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EmptyState, PageHeader } from "../components/common/States";
 import { useLibrarySummary } from "../hooks/useCatalog";
-import { useLibrary, useMovieSummary } from "../hooks/useCatalog";
+import { useLibrary } from "../hooks/useCatalog";
 import { MovieCard } from "../components/movies/MovieCard";
 import "../styles/movies.css";
 import "../styles/shows.css";
@@ -89,7 +94,14 @@ export function Dashboard() {
     pageSize: 4,
     sort: "newest",
   });
-  const movieSummary = useMovieSummary();
+  const analytics = useAnalyticsData();
+  const analysis = useMemo(
+    () =>
+      analytics.data
+        ? calculateAnalytics(analytics.data, undefined, localToday())
+        : null,
+    [analytics.data],
+  );
   return (
     <>
       <PageHeader
@@ -140,31 +152,66 @@ export function Dashboard() {
           label="Movies watched"
           icon={Film}
           path="/movies"
-          value={movieSummary.data?.watched}
-          loading={movieSummary.isLoading}
+          value={analysis?.overview.moviesWatched}
+          loading={analytics.isLoading}
         />
         <StatCard
-          label="TV Shows"
+          label="Completed TV shows"
           icon={Tv}
           path="/shows"
-          value={summary.data?.shows}
+          value={analysis?.overview.showsCompleted}
           loading={summary.isLoading}
         />
         <StatCard
           label="Watchlist"
           icon={Bookmark}
           path="/watchlist"
-          value={summary.data?.watchlist}
+          value={analysis?.overview.watchlist}
           loading={summary.isLoading}
         />
         <StatCard
           label="Favorites"
           icon={Heart}
           path="/favorites"
-          value={summary.data?.favorites}
+          value={analysis?.overview.favorites}
           loading={summary.isLoading}
         />
       </section>
+      {analysis && (
+        <section className="panel analytics-insights">
+          <div>
+            <Sparkles size={18} />
+            <span className="eyebrow">YOUR VIEWING PERSPECTIVE</span>
+          </div>
+          <h2>
+            {analysis.overview.count
+              ? `${displayNumber(analysis.overview.average)} /10 across ${analysis.overview.count} rated stories`
+              : "Your perspective is taking shape."}
+          </h2>
+          <p>
+            {analysis.insights[0] ??
+              "Record personal ratings and viewing dates to discover patterns in your collection."}
+          </p>
+          <p>
+            {analysis.years.at(-1)
+              ? `${analysis.years.at(-1)!.name}: ${analysis.years.at(-1)!.movies} movie viewing events and ${analysis.years.at(-1)!.shows} recorded show completions.`
+              : "Watching activity needs personal viewing dates."}
+          </p>
+          <div className="dashboard-analytics-recent">
+            {analysis.recent.map((item) => (
+              <Link
+                key={item.title.id}
+                to={`/${item.title.mediaType === "movie" ? "movies" : "shows"}/${item.title.id}`}
+              >
+                {item.title.title} ↗
+              </Link>
+            ))}
+          </div>
+          <Link className="text-link" to="/analytics">
+            Explore your analytics ↗
+          </Link>
+        </section>
+      )}
       <ContinueWatching />
       <div className="dashboard-bottom">
         <section className="panel collection-panel">
@@ -296,11 +343,13 @@ export function Dashboard() {
           <div>
             <h2>A journal, one story at a time.</h2>
             <p>
-              Recent activity will appear here as your archive grows. Viewing
-              history is planned for a later phase.
+              Explore recorded viewing activity and personal insights in
+              Analytics. Diary editing arrives in Phase 9.
             </p>
           </div>
-          <span className="outline-pill">Recent activity · Upcoming</span>
+          <Link className="outline-pill" to="/analytics">
+            Viewing analytics · Local
+          </Link>
         </article>
       </section>
     </>

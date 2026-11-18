@@ -19,9 +19,7 @@ const CollectionPage = lazy(() =>
     default: module.CollectionPage,
   })),
 );
-const AnalyticsPage = lazy(() =>
-  import("./pages/Pages").then((module) => ({ default: module.AnalyticsPage })),
-);
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const ImportExportPage = lazy(() => import("./pages/ImportExportPage"));
 const SettingsPage = lazy(() =>
   import("./pages/Pages").then((module) => ({ default: module.SettingsPage })),
