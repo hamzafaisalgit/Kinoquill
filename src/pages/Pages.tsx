@@ -3,8 +3,6 @@ import {
   ArrowUpRight,
   ChartNoAxesCombined,
   Clock3,
-  Database,
-  FileSpreadsheet,
   Film,
   Globe2,
   Heart,
@@ -13,7 +11,6 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Star,
-  Upload,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -151,60 +148,6 @@ export function AnalyticsPage() {
   );
 }
 
-export function ImportExportPage() {
-  return (
-    <>
-      <PageHeader
-        eyebrow="YOUR HISTORY, CONTINUED"
-        title="Bring your stories along."
-        description="Years of watching deserve more than a spreadsheet."
-      />
-      <div className="transfer-grid">
-        <section className="panel import-panel">
-          <span className="pill">COMING IN A LATER PHASE</span>
-          <div className="file-art" aria-hidden="true">
-            <FileSpreadsheet size={60} strokeWidth={1} />
-            <span>XLSX</span>
-            <ArrowUpRight size={20} />
-            <span>CSV</span>
-          </div>
-          <h2>A new home for your collection.</h2>
-          <p>
-            Import your existing Excel workbooks and CSV files with column
-            mapping, duplicate checks, and a preview before anything is saved.
-            Multiple sheets, validation, and exports will be handled entirely in
-            your browser.
-          </p>
-          <div className="disabled-dropzone" aria-disabled="true">
-            <Upload size={24} />
-            <strong>File import is on its way</strong>
-            <span>Excel (.xlsx) & CSV · Not available in Phase 1</span>
-          </div>
-        </section>
-        <div className="transfer-details">
-          <article className="panel feature-card">
-            <ShieldCheck size={24} />
-            <h2>Your history, handled with care.</h2>
-            <p>
-              Future imports will validate records before saving, flag
-              incomplete entries, and preserve historical ratings.
-            </p>
-          </article>
-          <article className="panel feature-card">
-            <Database size={24} />
-            <h2>Keep a copy of your world.</h2>
-            <p>
-              Library exports and downloadable templates will arrive alongside
-              the import tools.
-            </p>
-            <span className="upcoming-label">EXPORT TOOLS · UPCOMING</span>
-          </article>
-        </div>
-      </div>
-    </>
-  );
-}
-
 export function SettingsPage() {
   const storage = useLocalStorage();
   return (
@@ -231,7 +174,7 @@ export function SettingsPage() {
           </div>
           <div>
             <dt>Current edition</dt>
-            <dd>Phase 06 · Library & organization</dd>
+            <dd>Phase 07 · Spreadsheet import & export</dd>
           </div>
           <div>
             <dt>Local database</dt>

@@ -80,6 +80,7 @@ export const STATUSES = statuses.map((value) => ({
           : value[0].toUpperCase() + value.slice(1),
 }));
 export const FILTER_KEYS = [
+  "importBatch",
   "q",
   "type",
   "status",
@@ -135,6 +136,7 @@ export function parseLibraryParams(params: URLSearchParams): LibraryQuery {
     status = params.get("status"),
     sort = params.get("sort");
   return {
+    importBatchId: params.get("importBatch")?.slice(0, 100) || undefined,
     search: params.get("q")?.trim().slice(0, 500),
     ...(type === "movie" || type === "tv"
       ? { mediaType: type }

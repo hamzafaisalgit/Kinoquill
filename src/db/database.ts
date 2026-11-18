@@ -1,5 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type { AppSettings, LocalMetadata } from "../types/storage";
+import type { ImportBatch, ImportRecord } from "../types/imports";
 import type {
   Title,
   Genre,
@@ -18,7 +19,7 @@ import type {
 } from "../types/domain";
 
 export const DATABASE_NAME = "kinoquill_local";
-export const DATABASE_VERSION = 3;
+export const DATABASE_VERSION = 4;
 
 export class KinoquillDatabase extends Dexie {
   appSettings!: Table<AppSettings, string>;
@@ -37,6 +38,8 @@ export class KinoquillDatabase extends Dexie {
   episodeProgress!: Table<EpisodeProgress, string>;
   showMetadata!: Table<ShowMetadata, string>;
   seasonTracking!: Table<SeasonTracking, [string, string]>;
+  importBatches!: Table<ImportBatch, string>;
+  importRecords!: Table<ImportRecord, string>;
 
   constructor(name = DATABASE_NAME) {
     super(name);
@@ -66,6 +69,10 @@ export class KinoquillDatabase extends Dexie {
     this.version(3).stores({
       showMetadata: "&titleId",
       seasonTracking: "[libraryEntryId+seasonId],libraryEntryId,seasonId",
+    });
+    this.version(4).stores({
+      importBatches: "&id,importedAt",
+      importRecords: "&id,batchId,entryId,titleId",
     });
   }
 }

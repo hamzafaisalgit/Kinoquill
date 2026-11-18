@@ -375,6 +375,12 @@ export function LibraryExplorer({
             <Tags size={14} />
             Manage categories
           </button>
+          <Link
+            className="text-link library-export-link"
+            to={`/import-export?from=${encodeURIComponent(location.pathname + location.search)}`}
+          >
+            Export results
+          </Link>
           {view === "table" && (
             <details className="library-column-picker">
               <summary>

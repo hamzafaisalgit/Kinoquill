@@ -187,6 +187,41 @@ export class LibraryService {
       return entry;
     });
   }
+  /** Controlled spreadsheet intake; validates all values while retaining imported precision. */
+  async importHistoricalLibraryUpdate(
+    id: string,
+    input: LibraryUpdate,
+    expectedRevision: number,
+  ) {
+    const patch = validate(libraryUpdateSchema, input);
+    return write(this.db, async () => {
+      const current = await activeEntry(this.db, id);
+      if (current.revision !== expectedRevision)
+        throw new ConflictError(
+          "This entry changed after the import preview. Revalidate before importing.",
+        );
+      const values = validate(libraryBaseSchema, {
+        status: current.status,
+        personalRating: current.personalRating,
+        personalReview: current.personalReview,
+        isFavorite: current.isFavorite,
+        startedAt: current.startedAt,
+        completedAt: current.completedAt,
+        ...patch,
+      });
+      const entry = {
+        ...current,
+        ...values,
+        ratingPolicy: "historical" as const,
+        revision: current.revision + 1,
+        updatedAt: now(),
+      };
+      entry.reviewReasons = await reviewFlags(this.db, entry);
+      entry.needsReview = entry.reviewReasons.length > 0;
+      await this.db.libraryEntries.put(entry);
+      return entry;
+    });
+  }
 
   setFavorite(id: string, favorite: boolean) {
     return this.updateLibraryEntry(id, { isFavorite: favorite });
@@ -236,6 +271,11 @@ export class LibraryService {
 
   async listLibraryEntries(query: LibraryQuery = {}) {
     return queryLibrary(this.db, query);
+  }
+  async exportLibraryEntries(query: LibraryQuery = {}) {
+    return (
+      await queryLibrary(this.db, { ...query, page: 1, pageSize: 200 }, true)
+    ).items;
   }
 
   async bulkUpdate(targets: LibraryTarget[], action: BulkAction) {

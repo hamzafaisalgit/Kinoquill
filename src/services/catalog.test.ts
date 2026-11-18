@@ -77,7 +77,7 @@ describe("schema and migration integrity", () => {
     ).toBe(0);
   });
   it("defines all Phase 2 stores without future-phase list/import stores", () => {
-    expect(db.verno).toBe(3);
+    expect(db.verno).toBe(4);
     expect(db.tables.map((table) => table.name).sort()).toEqual(
       [
         "appSettings",
@@ -96,6 +96,8 @@ describe("schema and migration integrity", () => {
         "episodeProgress",
         "showMetadata",
         "seasonTracking",
+        "importBatches",
+        "importRecords",
       ].sort(),
     );
   });

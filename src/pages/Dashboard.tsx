@@ -223,7 +223,7 @@ export function Dashboard() {
             <Sparkles size={20} className="accent" />
           </div>
           <p className="next-description">
-            Add a movie now. More tools arrive in the next chapters.
+            Add movies, follow series, or bring your spreadsheet history.
           </p>
           {[
             {
@@ -241,41 +241,36 @@ export function Dashboard() {
               title: "Bring your history",
               text: "Give your Excel & CSV records a new home.",
             },
-          ].map(({ icon: Icon, title, text }, index) =>
-            index <= 1 ? (
-              <Link
-                key={title}
-                className="quick-action movie-quick-action"
-                to={index === 0 ? "/movies/new" : "/shows/new"}
-              >
-                <span className="quick-icon">
-                  <Icon size={18} />
+          ].map(({ icon: Icon, title, text }, index) => (
+            <Link
+              key={title}
+              className="quick-action movie-quick-action"
+              to={["/movies/new", "/shows/new", "/import-export"][index]}
+            >
+              <span className="quick-icon">
+                <Icon size={18} />
+              </span>
+              <div>
+                <strong>
+                  {
+                    ["Add a movie", "Add a TV show", "Import your collection"][
+                      index
+                    ]
+                  }
+                </strong>
+                <p>{text}</p>
+                <span className="upcoming-label">
+                  {
+                    [
+                      "OPEN MOVIE ENTRY ↗",
+                      "OPEN SHOW ENTRY ↗",
+                      "OPEN IMPORT & EXPORT ↗",
+                    ][index]
+                  }
                 </span>
-                <div>
-                  <strong>
-                    {index === 0 ? "Add a movie" : "Add a TV show"}
-                  </strong>
-                  <p>{text}</p>
-                  <span className="upcoming-label">
-                    {index === 0 ? "OPEN MOVIE ENTRY ↗" : "OPEN SHOW ENTRY ↗"}
-                  </span>
-                </div>
-              </Link>
-            ) : (
-              <div className="quick-action" key={title} aria-disabled="true">
-                <span className="quick-icon">
-                  <Icon size={18} />
-                </span>
-                <div>
-                  <strong>{title}</strong>
-                  <p>{text}</p>
-                  <span className="upcoming-label">
-                    COMING IN A LATER PHASE
-                  </span>
-                </div>
               </div>
-            ),
-          )}
+            </Link>
+          ))}
           <div className="next-footer">
             Thoughtfully built. One chapter at a time.
           </div>

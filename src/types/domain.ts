@@ -159,6 +159,7 @@ export type LibrarySort =
   | "runtime_desc"
   | "runtime_asc";
 export interface LibraryQuery {
+  importBatchId?: string;
   search?: string;
   mediaType?: MediaType;
   mediaSubtype?: MediaSubtype;

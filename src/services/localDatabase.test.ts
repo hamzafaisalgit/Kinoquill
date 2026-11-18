@@ -31,8 +31,8 @@ afterEach(async () => {
 describe("local database foundation", () => {
   it("defines a stable production name and schema version", () => {
     expect(DATABASE_NAME).toBe("kinoquill_local");
-    expect(DATABASE_VERSION).toBe(3);
-    expect(createService().getVersionInfo().version).toBe(3);
+    expect(DATABASE_VERSION).toBe(4);
+    expect(createService().getVersionInfo().version).toBe(4);
   });
 
   it("retains foundation stores and verifies an actual write/read", async () => {
@@ -159,7 +159,7 @@ describe("local database foundation", () => {
     service.database.close();
     const future = new Dexie(service.database.name);
     future.version(1).stores({ appSettings: "&id", localMetadata: "&key" });
-    future.version(4).stores({ localMetadata: "&key,value" });
+    future.version(5).stores({ localMetadata: "&key,value" });
     try {
       await future.open();
       expect(

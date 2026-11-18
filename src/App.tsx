@@ -22,11 +22,7 @@ const CollectionPage = lazy(() =>
 const AnalyticsPage = lazy(() =>
   import("./pages/Pages").then((module) => ({ default: module.AnalyticsPage })),
 );
-const ImportExportPage = lazy(() =>
-  import("./pages/Pages").then((module) => ({
-    default: module.ImportExportPage,
-  })),
-);
+const ImportExportPage = lazy(() => import("./pages/ImportExportPage"));
 const SettingsPage = lazy(() =>
   import("./pages/Pages").then((module) => ({ default: module.SettingsPage })),
 );

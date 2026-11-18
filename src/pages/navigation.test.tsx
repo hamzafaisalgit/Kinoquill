@@ -9,10 +9,10 @@ import LibraryPage from "./LibraryPage";
 import {
   AnalyticsPage,
   CollectionPage,
-  ImportExportPage,
   SettingsPage,
   NotFoundPage,
 } from "./Pages";
+import ImportExportPage from "./ImportExportPage";
 
 describe("frontend-only navigation", () => {
   const pages = [

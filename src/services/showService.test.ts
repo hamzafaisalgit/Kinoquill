@@ -222,7 +222,13 @@ it("upgrades v2 additively while preserving movies, settings and existing TV pro
   const schema = Object.fromEntries(
     db.tables
       .filter(
-        (table) => !["showMetadata", "seasonTracking"].includes(table.name),
+        (table) =>
+          ![
+            "showMetadata",
+            "seasonTracking",
+            "importBatches",
+            "importRecords",
+          ].includes(table.name),
       )
       .map((table) => [
         table.name,
